@@ -207,10 +207,12 @@ interface TableHeadProps extends React.ThHTMLAttributes<HTMLTableCellElement> {
   sorted?: SortDirection;
   /** Sıralama değiştiğinde çağrılacak fonksiyon */
   onSort?: () => void;
+  /** Text alignment */
+  align?: 'left' | 'center' | 'right';
 }
 
 const TableHead = React.forwardRef<HTMLTableCellElement, TableHeadProps>(
-  ({ className, sortable, sorted, onSort, children, ...props }, ref) => {
+  ({ className, sortable, sorted, onSort, align = 'left', children, ...props }, ref) => {
     // Sıralama için simgeler
     const renderSortIcon = () => {
       if (!sortable) return null;
@@ -265,37 +267,61 @@ const TableHead = React.forwardRef<HTMLTableCellElement, TableHeadProps>(
       );
     };
     
+    const alignmentClasses = {
+      left: 'text-left justify-start',
+      center: 'text-center justify-center',
+      right: 'text-right justify-end'
+    };
+
     return (
       <th
         ref={ref}
         className={cn(
-          "h-10 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
+          "h-10 px-4 align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
+          alignmentClasses[align].split(' ')[0], // text alignment
           sortable && "cursor-pointer hover:text-foreground select-none",
           className
         )}
         onClick={sortable ? onSort : undefined}
         {...props}
       >
-        <div className="flex items-center">
-          {children}
-          {sortable && renderSortIcon()}
-        </div>
+        {sortable || align !== 'left' ? (
+          <div className={cn("flex items-center", alignmentClasses[align].split(' ')[1])}>
+            {children}
+            {sortable && renderSortIcon()}
+          </div>
+        ) : (
+          children
+        )}
       </th>
     );
   }
 );
 TableHead.displayName = "TableHead";
 
+interface TableCellProps extends React.TdHTMLAttributes<HTMLTableCellElement> {
+  /** Text alignment */
+  align?: 'left' | 'center' | 'right';
+}
+
 const TableCell = React.forwardRef<
   HTMLTableCellElement,
-  React.TdHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref) => (
-  <td
-    ref={ref}
-    className={cn("moonui-theme", "p-4 align-middle [&:has([role=checkbox])]:pr-0", className)}
-    {...props}
-  />
-));
+  TableCellProps
+>(({ className, align = 'left', ...props }, ref) => {
+  const alignmentClass = {
+    left: 'text-left',
+    center: 'text-center',
+    right: 'text-right'
+  }[align];
+
+  return (
+    <td
+      ref={ref}
+      className={cn("moonui-theme", "p-4 align-middle [&:has([role=checkbox])]:pr-0", alignmentClass, className)}
+      {...props}
+    />
+  );
+});
 TableCell.displayName = "TableCell";
 
 const TableCaption = React.forwardRef<

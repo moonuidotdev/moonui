@@ -187,7 +187,7 @@ const TabsContent = React.forwardRef<
     ref={ref}
     className={cn(
       "moonui-theme",
-      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+      "mt-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
       animated && "data-[state=active]:animate-fadeIn data-[state=inactive]:animate-fadeOut",
       className
     )}

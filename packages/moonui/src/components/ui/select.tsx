@@ -61,10 +61,10 @@ const SelectTrigger = React.forwardRef<
       size === "md" && "h-10 text-sm px-3",
       size === "lg" && "h-12 text-base px-4",
       /* Visual variants */
-      variant === "standard" && "border border-gray-300 dark:border-gray-700 bg-background dark:bg-gray-900 hover:border-gray-400 dark:hover:border-gray-600 focus-visible:ring-2 focus-visible:ring-primary/30 dark:focus-visible:ring-primary/50 focus-visible:border-primary dark:focus-visible:border-primary",
-      variant === "outline" && "border border-gray-300 dark:border-gray-700 bg-transparent hover:border-gray-400 dark:hover:border-gray-600 focus-visible:ring-2 focus-visible:ring-primary/30 dark:focus-visible:ring-primary/50 focus-visible:border-primary dark:focus-visible:border-primary",
-      variant === "ghost" && "border-none bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 focus-visible:ring-2 focus-visible:ring-primary/30 dark:focus-visible:ring-primary/50",
-      variant === "underline" && "border-t-0 border-l-0 border-r-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 hover:border-gray-400 dark:hover:border-gray-500 focus-visible:ring-0 focus-visible:border-b-2 focus-visible:border-primary dark:focus-visible:border-primary",
+      variant === "standard" && "border border-gray-300 dark:border-gray-700 bg-background dark:bg-gray-800/80 dark:shadow-inner dark:shadow-gray-950/10 dark:text-gray-200 hover:border-gray-400 dark:hover:border-gray-600 focus-visible:ring-2 focus-visible:ring-primary/30 dark:focus-visible:ring-primary/20 focus-visible:border-primary dark:focus-visible:border-primary/80",
+      variant === "outline" && "border border-gray-300 dark:border-gray-700 bg-transparent dark:text-gray-200 hover:border-gray-400 dark:hover:border-gray-600 focus-visible:ring-2 focus-visible:ring-primary/30 dark:focus-visible:ring-primary/20 focus-visible:border-primary dark:focus-visible:border-primary/80",
+      variant === "ghost" && "border-none bg-gray-100 dark:bg-gray-800 dark:shadow-inner dark:shadow-gray-950/10 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 focus-visible:ring-2 focus-visible:ring-primary/30 dark:focus-visible:ring-primary/20",
+      variant === "underline" && "border-t-0 border-l-0 border-r-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 dark:text-gray-200 dark:bg-transparent hover:border-gray-400 dark:hover:border-gray-500 focus-visible:ring-0 focus-visible:border-b-2 focus-visible:border-primary dark:focus-visible:border-primary/80",
       className
     )}
     {...props}
@@ -152,9 +152,9 @@ const SelectContent = React.forwardRef<
       align={align}
       avoidCollisions={false}
       className={cn(
-        ["relative z-50 max-h-96 min-w-[8rem] overflow-hidden", 
+        ["relative z-50 max-h-96 min-w-[8rem] overflow-hidden",
         "rounded-md border border-gray-200 dark:border-gray-700",
-        "bg-white dark:bg-gray-900 text-foreground", 
+        "bg-background dark:bg-gray-800/80 backdrop-blur-sm text-foreground dark:text-gray-200",
         "shadow-lg dark:shadow-gray-900/20",
         "data-[state=open]:animate-in data-[state=closed]:animate-out",
         "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
@@ -216,8 +216,11 @@ const SelectItem = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex w-full cursor-default select-none items-center rounded-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-      
+      "moonui-theme",
+      "relative flex w-full cursor-default select-none items-center rounded-sm outline-none",
+      "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "transition-colors duration-150",
+
       /* Size variants */
       size === "sm" && "py-1 pl-7 pr-2 text-xs",
       size === "md" && "py-1.5 pl-8 pr-2 text-sm",

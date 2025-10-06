@@ -9,24 +9,28 @@ A premium React component library built for modern web applications. MoonUI prov
 ## ✨ Features
 
 ### 🎨 **Beautiful Design**
+
 - **50+ Premium Components** - Carefully crafted with attention to detail
 - **Modern Aesthetics** - Clean, minimalist design that works everywhere
 - **Consistent Typography** - Harmonious text hierarchy and spacing
 - **Smooth Animations** - Delightful micro-interactions powered by Framer Motion
 
 ### 🌙 **Dark Mode Ready**
+
 - **Built-in Dark Mode** - Seamless light/dark theme switching
 - **CSS Variables** - Easy customization with design tokens
 - **Theme Provider** - Consistent theming across your application
 - **Custom Themes** - Create your own color palettes
 
 ### ♿ **Accessibility First**
+
 - **WCAG Compliant** - Meets accessibility standards
 - **Keyboard Navigation** - Full keyboard support
 - **Screen Reader Friendly** - Proper ARIA labels and descriptions
 - **Focus Management** - Intuitive focus handling
 
 ### 🔧 **Developer Experience**
+
 - **TypeScript** - Full type safety and IntelliSense
 - **Tree Shaking** - Import only what you use
 - **Zero Config** - Works out of the box
@@ -34,6 +38,7 @@ A premium React component library built for modern web applications. MoonUI prov
 - **Storybook** - Interactive component documentation
 
 ### 📱 **Responsive & Performance**
+
 - **Mobile First** - Optimized for all screen sizes
 - **Lightweight** - Minimal bundle impact
 - **React 18+ Compatible** - Latest React features
@@ -57,22 +62,30 @@ For quick prototyping or artifact environments:
 
 ```html
 <!-- Dependencies -->
-<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script
+    crossorigin
+    src="https://unpkg.com/react@18/umd/react.production.min.js"
+></script>
+<script
+    crossorigin
+    src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+></script>
 
 <!-- MoonUI -->
 <script src="https://cdn.jsdelivr.net/npm/@moontra/moonui@2.3.2/dist/index.global.js"></script>
 
 <script>
-  const { Button, Card } = window.MoonUI;
-  
-  function App() {
-    return React.createElement(Card, null,
-      React.createElement(Button, { variant: 'default' }, 'Hello MoonUI!')
-    );
-  }
-  
-  ReactDOM.render(React.createElement(App), document.getElementById('root'));
+    const { Button, Card } = window.MoonUI;
+
+    function App() {
+        return React.createElement(
+            Card,
+            null,
+            React.createElement(Button, { variant: "default" }, "Hello MoonUI!")
+        );
+    }
+
+    ReactDOM.render(React.createElement(App), document.getElementById("root"));
 </script>
 ```
 
@@ -83,21 +96,21 @@ For quick prototyping or artifact environments:
 ```javascript
 // tailwind.config.js
 module.exports = {
-  content: [
-    "./src/**/*.{js,ts,jsx,tsx}",
-    "./node_modules/@moontra/moonui/**/*.{js,mjs}"
-  ],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-}
+    content: [
+        "./src/**/*.{js,ts,jsx,tsx}",
+        "./node_modules/@moontra/moonui/**/*.{js,mjs}",
+    ],
+    theme: {
+        extend: {},
+    },
+    plugins: [],
+};
 ```
 
 2. **Import styles** (in your main CSS file)
 
 ```css
-@import '@moontra/moonui/styles';
+@import "@moontra/moonui/styles";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -106,38 +119,41 @@ module.exports = {
 3. **Start using components**
 
 ```jsx
-import { Button, Card, Input } from '@moontra/moonui';
+import { Button, Card, Input } from "@moontra/moonui";
 
 function App() {
-  return (
-    <Card className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Welcome to MoonUI</h1>
-      <div className="space-y-4">
-        <Input placeholder="Enter your name" />
-        <Button variant="default" size="lg">
-          Get Started
-        </Button>
-      </div>
-    </Card>
-  );
+    return (
+        <Card className="p-6">
+            <h1 className="text-2xl font-bold mb-4">Welcome to MoonUI</h1>
+            <div className="space-y-4">
+                <Input placeholder="Enter your name" />
+                <Button variant="default" size="lg">
+                    Get Started
+                </Button>
+            </div>
+        </Card>
+    );
 }
 ```
 
 ## 📚 Components
 
 ### Layout & Structure
+
 - **Card** - Flexible content containers
 - **Separator** - Visual content dividers
 - **AspectRatio** - Responsive aspect ratio containers
 - **ScrollArea** - Custom scrollable areas
 
 ### Navigation
+
 - **Breadcrumb** - Hierarchical navigation
 - **Pagination** - Page navigation controls
 - **Tabs** - Tabbed interfaces
 - **Navigation Menu** - Complex navigation structures
 
 ### Form Controls
+
 - **Button** - Interactive buttons with variants
 - **Input** - Text input fields
 - **Textarea** - Multi-line text input
@@ -149,6 +165,7 @@ function App() {
 - **Label** - Form field labels
 
 ### Feedback & Overlays
+
 - **Dialog** - Modal dialogs
 - **AlertDialog** - Confirmation dialogs
 - **Toast** - Notification messages
@@ -158,6 +175,7 @@ function App() {
 - **HoverCard** - Hover-triggered content
 
 ### Data Display
+
 - **Avatar** - User profile images
 - **Badge** - Status indicators
 - **Progress** - Loading indicators
@@ -167,12 +185,14 @@ function App() {
 - **Accordion** - Collapsible content
 
 ### Media & Graphics
+
 - **Calendar** - Date selection
 - **DatePicker** - Date input controls
 - **ColorPicker** - Color selection
 - **FileUpload** - File upload interface
 
 ### Advanced
+
 - **Command** - Command palette interface
 - **Collapsible** - Expandable content
 - **DropdownMenu** - Context menus
@@ -186,31 +206,31 @@ MoonUI uses CSS variables for easy theming:
 
 ```css
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --primary: 222.2 47.4% 11.2%;
-  --primary-foreground: 210 40% 98%;
-  /* ... more variables */
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    /* ... more variables */
 }
 
 .dark {
-  --background: 222.2 84% 4.9%;
-  --foreground: 210 40% 98%;
-  /* ... dark theme variables */
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    /* ... dark theme variables */
 }
 ```
 
 ### Theme Provider
 
 ```jsx
-import { ThemeProvider } from '@moontra/moonui/theme';
+import { ThemeProvider } from "@moontra/moonui/theme";
 
 function App() {
-  return (
-    <ThemeProvider attribute="class" defaultTheme="system">
-      <YourApp />
-    </ThemeProvider>
-  );
+    return (
+        <ThemeProvider attribute="class" defaultTheme="system">
+            <YourApp />
+        </ThemeProvider>
+    );
 }
 ```
 
@@ -218,8 +238,8 @@ function App() {
 
 ```css
 :root {
-  --primary: 142 76% 36%; /* Custom green */
-  --secondary: 210 40% 95%;
+    --primary: 142 76% 36%; /* Custom green */
+    --secondary: 210 40% 95%;
 }
 ```
 
@@ -266,6 +286,7 @@ npm install -g @moontra/moonui-mcp-server
 ```
 
 AI assistants can then help you:
+
 - 🎯 Find the right components for your use case
 - 🔧 Generate component code automatically
 - 🐛 Fix import issues
@@ -293,7 +314,7 @@ Upgrade to MoonUI Pro for advanced components:
 
 ### Requirements
 
-- Node.js 18+ 
+- Node.js 18+
 - React 18+
 - TypeScript 5+
 - Tailwind CSS 3+
@@ -357,6 +378,7 @@ Licensed under the [MIT License](LICENSE).
 ## 🙏 Acknowledgments
 
 Built with:
+
 - [React](https://reactjs.org/)
 - [Radix UI](https://radix-ui.com/)
 - [Tailwind CSS](https://tailwindcss.com/)

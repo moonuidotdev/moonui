@@ -1,45 +1,219 @@
 "use client"
 
 import * as React from "react"
-
+import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "../../lib/utils"
+import { Loader2 } from "lucide-react"
+
+/**
+ * Textarea Variant Styles
+ */
+const textareaVariants = cva(
+  [
+    "flex w-full rounded-md px-3 py-2 text-sm transition-all duration-200",
+    "text-foreground placeholder:text-muted-foreground dark:placeholder:text-gray-500",
+    "disabled:cursor-not-allowed disabled:opacity-50",
+    "focus-visible:outline-none dark:text-gray-200",
+    "resize-none" // Always disable manual resize, we control it
+  ],
+  {
+    variants: {
+      variant: {
+        default: "border border-gray-300 dark:border-gray-700 bg-background dark:bg-gray-800/80 hover:border-gray-400 dark:hover:border-gray-600 focus-visible:ring-2 focus-visible:ring-primary/30 dark:focus-visible:ring-primary/20 focus-visible:border-primary dark:focus-visible:border-primary/80 dark:shadow-inner dark:shadow-gray-950/10",
+        outline: "border-2 border-gray-300 dark:border-gray-700 bg-transparent hover:border-gray-400 dark:hover:border-gray-600 focus-visible:border-primary dark:focus-visible:border-primary/80",
+        ghost: "border-none bg-transparent hover:bg-gray-100/50 dark:hover:bg-gray-800/30 focus-visible:bg-transparent",
+        underline: "border-t-0 border-l-0 border-r-0 border-b-2 border-gray-300 dark:border-gray-600 rounded-none px-0 hover:border-gray-400 dark:hover:border-gray-500 focus-visible:ring-0 focus-visible:border-primary dark:focus-visible:border-primary/80 bg-transparent dark:bg-transparent"
+      },
+      size: {
+        sm: "min-h-[60px] text-xs",
+        md: "min-h-[80px] text-sm",
+        lg: "min-h-[120px] text-base"
+      },
+      isError: {
+        true: "border-error focus-visible:ring-error/30 focus-visible:border-error hover:border-error/80 dark:hover:border-error/80",
+        false: ""
+      },
+      isSuccess: {
+        true: "border-success focus-visible:ring-success/30 focus-visible:border-success hover:border-success/80 dark:hover:border-success/80",
+        false: ""
+      }
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "md",
+      isError: false,
+      isSuccess: false
+    }
+  }
+)
 
 export interface TextareaProps
-  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
-  // Enhanced props that shouldn't be passed to DOM
-  variant?: "default" | "outline" | "ghost" | "underline"
-  size?: "sm" | "md" | "lg"
+  extends Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, "size">,
+    Omit<VariantProps<typeof textareaVariants>, "isError" | "isSuccess"> {
+  /** Hata mesajı */
   error?: boolean | string
-  success?: boolean
+  /** Başarı mesajı */
+  success?: boolean | string
+  /** Yükleniyor durumu */
   loading?: boolean
+  /** Otomatik yükseklik ayarlama */
   autoResize?: boolean
+  /** Maksimum yükseklik (px) */
   maxHeight?: number
+  /** Karakter sayacı göster */
   characterCount?: boolean
+  /** Wrapper için ek sınıflar */
+  wrapperClassName?: string
+  /** Mesaj için ek sınıflar */
+  messageClassName?: string
 }
 
+/**
+ * Advanced Textarea Component
+ *
+ * Features:
+ * - Auto-resize based on content
+ * - Character count display
+ * - Max height constraint
+ * - Multiple variants
+ * - Error/Success states
+ * - Loading state
+ */
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ 
-    className, 
-    // Extract enhanced props to prevent them from being passed to DOM
+  ({
+    className,
+    wrapperClassName,
+    messageClassName,
     variant,
     size,
     error,
     success,
     loading,
-    autoResize,
+    autoResize = false,
     maxHeight,
-    characterCount,
-    ...props 
+    characterCount = false,
+    disabled,
+    maxLength,
+    value,
+    defaultValue,
+    onChange,
+    ...props
   }, ref) => {
+    const textareaRef = React.useRef<HTMLTextAreaElement>(null)
+    const [internalValue, setInternalValue] = React.useState(value || defaultValue || "")
+
+    // Merge refs
+    React.useImperativeHandle(ref, () => textareaRef.current!)
+
+    // Auto-resize logic
+    const adjustHeight = React.useCallback(() => {
+      const textarea = textareaRef.current
+      if (!textarea || !autoResize) return
+
+      // Reset height to get correct scrollHeight
+      textarea.style.height = 'auto'
+
+      // Set new height
+      const newHeight = textarea.scrollHeight
+      if (maxHeight && newHeight > maxHeight) {
+        textarea.style.height = `${maxHeight}px`
+        textarea.style.overflowY = 'auto'
+      } else {
+        textarea.style.height = `${newHeight}px`
+        textarea.style.overflowY = 'hidden'
+      }
+    }, [autoResize, maxHeight])
+
+    // Adjust height on value change
+    React.useEffect(() => {
+      adjustHeight()
+    }, [internalValue, adjustHeight])
+
+    // Handle value changes
+    React.useEffect(() => {
+      if (value !== undefined) {
+        setInternalValue(value)
+      }
+    }, [value])
+
+    const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setInternalValue(e.target.value)
+      onChange?.(e)
+    }
+
+    // Character count
+    const currentLength = String(internalValue).length
+    const showCharCount = characterCount && (maxLength !== undefined || currentLength > 0)
+
+    // Messages
+    const errorMessage = typeof error === "string" ? error : undefined
+    const successMessage = typeof success === "string" ? success : undefined
+    const showMessage = errorMessage || successMessage
+
     return (
-      <textarea
-        className={cn("moonui-theme", 
-          "flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-          className
-        )}
-        ref={ref}
-        {...props}
-      />
+      <div className={cn("moonui-theme", "space-y-1.5 w-full", wrapperClassName)}>
+        <div className="relative">
+          <textarea
+            ref={textareaRef}
+            className={cn(
+              textareaVariants({
+                variant,
+                size,
+                isError: !!error,
+                isSuccess: !!success
+              }),
+              loading && "pr-10",
+              className
+            )}
+            disabled={disabled || loading}
+            value={value}
+            defaultValue={defaultValue}
+            onChange={handleChange}
+            maxLength={maxLength}
+            aria-invalid={!!error || undefined}
+            aria-describedby={
+              errorMessage ? `${props.id || ''}-error` :
+              successMessage ? `${props.id || ''}-success` :
+              undefined
+            }
+            {...props}
+          />
+
+          {loading && (
+            <div className="absolute top-3 right-3 text-gray-500">
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between">
+          {/* Error/Success Message */}
+          {showMessage && (
+            <p
+              className={cn(
+                "text-xs transition-all",
+                errorMessage && "text-error",
+                successMessage && "text-success",
+                messageClassName
+              )}
+              id={
+                errorMessage ? `${props.id || ''}-error` :
+                successMessage ? `${props.id || ''}-success` :
+                undefined
+              }
+            >
+              {errorMessage || successMessage}
+            </p>
+          )}
+
+          {/* Character Count */}
+          {showCharCount && (
+            <p className="text-xs text-muted-foreground dark:text-gray-500 ml-auto">
+              {currentLength}{maxLength !== undefined && ` / ${maxLength}`}
+            </p>
+          )}
+        </div>
+      </div>
     )
   }
 )

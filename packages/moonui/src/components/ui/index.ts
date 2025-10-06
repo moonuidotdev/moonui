@@ -17,6 +17,10 @@ export {
     AlertDescription as MoonUIAlertDescription,
 } from "./alert";
 
+export type {
+    AlertProps as MoonUIAlertProps,
+} from "./alert";
+
 // AspectRatio
 export { AspectRatio as MoonUIAspectRatio } from "./aspect-ratio";
 
@@ -28,10 +32,18 @@ export {
     AvatarGroup as MoonUIAvatarGroup,
 } from "./avatar";
 
+export type {
+    AvatarProps as MoonUIAvatarProps,
+} from "./avatar";
+
 // Badge
 export {
     Badge as MoonUIBadge,
     badgeVariants as moonUIBadgeVariants,
+} from "./badge";
+
+export type {
+    BadgeProps as MoonUIBadgeProps,
 } from "./badge";
 
 // Breadcrumb
@@ -51,6 +63,10 @@ export {
     buttonVariants as moonUIButtonVariants,
 } from "./button";
 
+export type {
+    ButtonProps as MoonUIButtonProps,
+} from "./button";
+
 // Card
 export {
     Card as MoonUICard,
@@ -60,6 +76,19 @@ export {
     CardDescription as MoonUICardDescription,
     CardContent as MoonUICardContent,
 } from "./card";
+
+export type {
+    CardProps as MoonUICardProps,
+} from "./card";
+
+// Calendar
+export {
+    Calendar as MoonUICalendar,
+} from "./calendar";
+
+export type {
+    CalendarProps as MoonUICalendarProps,
+} from "./calendar";
 
 // Card Input
 export {
@@ -77,6 +106,10 @@ export {
     CheckboxLabel as MoonUICheckboxLabel,
 } from "./checkbox";
 
+export type {
+    CheckboxProps as MoonUICheckboxProps,
+} from "./checkbox";
+
 // Collapsible
 export {
     Collapsible as MoonUICollapsible,
@@ -89,6 +122,10 @@ export {
     ColorPicker as MoonUIColorPicker,
     SimpleColorPicker as MoonUISimpleColorPicker,
     GradientPicker as MoonUIGradientPicker,
+} from "./color-picker";
+
+export type {
+    ColorPickerProps as MoonUIColorPickerProps,
 } from "./color-picker";
 
 // Command
@@ -104,7 +141,7 @@ export {
     CommandSeparator as MoonUICommandSeparator,
 } from "./command";
 
-// DataTable
+// DataTable Basic (Free version with limited features)
 
 // DatePicker
 export {
@@ -112,6 +149,10 @@ export {
     DateRangePicker as MoonUIDateRangePicker,
     DateTimePicker as MoonUIDateTimePicker,
     MonthPicker as MoonUIMonthPicker,
+} from "./date-picker";
+
+export type {
+    DatePickerProps as MoonUIDatePickerProps,
 } from "./date-picker";
 
 // Dialog
@@ -127,6 +168,10 @@ export {
 } from "./dialog";
 
 // DraggableList
+
+export type {
+    DraggableListProps as MoonUIDraggableListProps,
+} from "./draggable-list";
 
 // DropdownMenu
 export {
@@ -149,12 +194,24 @@ export {
 
 // FileUpload
 
+export type {
+    FileUploadProps as MoonUIFileUploadProps,
+} from "./file-upload";
+
 // GestureDrawer
+
+export type {
+    GestureDrawerProps as MoonUIGestureDrawerProps,
+} from "./gesture-drawer";
 
 // GitHubStars
 
 // Input
 export { Input as MoonUIInput } from "./input";
+
+export type {
+    InputProps as MoonUIInputProps,
+} from "./input";
 
 // Label
 export { Label as MoonUILabel } from "./label";
@@ -194,12 +251,20 @@ export {
 // Progress
 export { Progress as MoonUIProgress } from "./progress";
 
+export type {
+    ProgressProps as MoonUIProgressProps,
+} from "./progress";
+
 // RadioGroup
 export {
     RadioGroup as MoonUIRadioGroup,
     RadioGroupItem as MoonUIRadioGroupItem,
     RadioLabel as MoonUIRadioLabel,
     RadioItemWithLabel as MoonUIRadioItemWithLabel,
+} from "./radio-group";
+
+export type {
+    RadioGroupProps as MoonUIRadioGroupProps,
 } from "./radio-group";
 
 // RichTextEditor
@@ -209,6 +274,13 @@ export {
     ScrollArea as MoonUIScrollArea,
     ScrollBar as MoonUIScrollBar,
 } from "./scroll-area";
+
+// ScrollReveal
+export {
+    ScrollReveal as MoonUIScrollReveal,
+    ScrollRevealContainer as MoonUIScrollRevealContainer,
+    ScrollRevealItem as MoonUIScrollRevealItem,
+} from "./scroll-reveal";
 
 // Select
 export {
@@ -239,6 +311,10 @@ export {
     skeletonVariants as moonUISkeletonVariants,
 } from "./skeleton";
 
+export type {
+    SkeletonProps as MoonUISkeletonProps,
+} from "./skeleton";
+
 // Slider
 export { Slider as MoonUISlider } from "./slider";
 
@@ -246,6 +322,10 @@ export { Slider as MoonUISlider } from "./slider";
 
 // Switch
 export { Switch as MoonUISwitch } from "./switch";
+
+export type {
+    SwitchProps as MoonUISwitchProps,
+} from "./switch";
 
 // Table
 export {
@@ -272,6 +352,10 @@ export { TagsInput as MoonUITagsInput } from "./tags-input";
 
 // Textarea
 export { Textarea as MoonUITextarea } from "./textarea";
+
+export type {
+    TextareaProps as MoonUITextareaProps,
+} from "./textarea";
 
 // Toast
 export {
@@ -327,6 +411,7 @@ export * from "./popover";
 export * from "./progress";
 export * from "./radio-group";
 export * from "./scroll-area";
+export * from "./scroll-reveal";
 export * from "./select";
 export * from "./separator";
 export * from "./simple-editor";

@@ -15,7 +15,9 @@ const badgeVariants = cva(
   ["inline-flex items-center justify-center gap-1.5", 
   "font-medium transition-colors duration-200", 
   "border focus:outline-none",
-  "focus-visible:ring-2 focus-visible:ring-offset-1"],
+  "focus-visible:ring-2 focus-visible:ring-offset-1",
+  // Auto spacing between badges
+  "mr-2 mb-2 last:mr-0"],
   {
     variants: {
       variant: {
@@ -106,6 +108,8 @@ export interface BadgeProps
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   variant?: 'primary' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning' | 'ghost' | 'pro' | 'admin';
+  /** Disable automatic spacing between badges */
+  noAutoSpacing?: boolean;
 }
 
 /**
@@ -121,6 +125,7 @@ export interface BadgeProps
  * @param props.onRemove - Kaldırma işlevi
  * @param props.leftIcon - Badge'in solunda görüntülenecek ikon
  * @param props.rightIcon - Badge'in sağında görüntülenecek ikon
+ * @param props.noAutoSpacing - Otomatik spacing'i devre dışı bırak
  */
 function Badge({
   className,
@@ -133,6 +138,7 @@ function Badge({
   onRemove,
   leftIcon,
   rightIcon,
+  noAutoSpacing,
   children,
   ...props
 }: BadgeProps) {
@@ -164,7 +170,13 @@ function Badge({
 
   return (
     <div 
-      className={cn("moonui-theme", badgeVariants({ variant, size, radius }), className)} 
+      className={cn(
+        "moonui-theme", 
+        badgeVariants({ variant, size, radius }), 
+        // Remove auto-spacing if noAutoSpacing is true
+        noAutoSpacing && "mr-0 mb-0",
+        className
+      )} 
       data-removable={removable ? "" : undefined}
       {...props}
     >

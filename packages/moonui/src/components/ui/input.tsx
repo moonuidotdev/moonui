@@ -39,10 +39,10 @@ const inputVariants = cva(
   {
     variants: {
       variant: {
-        standard: "border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 hover:border-gray-400 dark:hover:border-gray-600 focus-visible:ring-2 focus-visible:ring-primary/30 dark:focus-visible:ring-primary/20 focus-visible:border-primary dark:focus-visible:border-primary/80 dark:bg-gray-900/60 dark:shadow-inner dark:shadow-gray-950/10",
-        filled: "border border-transparent bg-gray-100 dark:bg-gray-800/90 rounded-md px-3 py-2 hover:bg-gray-200 dark:hover:bg-gray-700/90 focus-visible:ring-2 focus-visible:ring-primary/30 dark:focus-visible:ring-primary/20 dark:shadow-inner dark:shadow-gray-950/10",
+        standard: "border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 hover:border-gray-400 dark:hover:border-gray-600 focus-visible:ring-2 focus-visible:ring-primary/30 dark:focus-visible:ring-primary/20 focus-visible:border-primary dark:focus-visible:border-primary/80 dark:bg-gray-800/80 dark:shadow-inner dark:shadow-gray-950/10",
+        filled: "border border-transparent bg-gray-100 dark:bg-gray-800 rounded-md px-3 py-2 hover:bg-gray-200 dark:hover:bg-gray-700 focus-visible:ring-2 focus-visible:ring-primary/30 dark:focus-visible:ring-primary/20 dark:shadow-inner dark:shadow-gray-950/10",
         ghost: "border-none bg-transparent shadow-none px-1 dark:text-gray-300 dark:placeholder:text-gray-500 hover:bg-gray-100/50 dark:hover:bg-gray-800/30 focus-visible:bg-transparent",
-        underline: "border-t-0 border-l-0 border-r-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 py-2 hover:border-gray-400 dark:hover:border-gray-500 focus-visible:ring-0 focus-visible:border-b-2 focus-visible:border-primary dark:focus-visible:border-primary/80 dark:text-gray-300",
+        underline: "border-t-0 border-l-0 border-r-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 py-2 hover:border-gray-400 dark:hover:border-gray-500 focus-visible:ring-0 focus-visible:border-b-2 focus-visible:border-primary dark:focus-visible:border-primary/80 dark:text-gray-300 dark:bg-transparent",
       },
       size: {
         sm: "h-8 text-xs",
@@ -90,6 +90,12 @@ const inputVariants = cva(
 export interface InputProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size">,
     Omit<VariantProps<typeof inputVariants>, "isDisabled" | "hasLeftIcon" | "hasRightIcon" | "hasRightButton"> {
+  /** Label metni */
+  label?: string;
+  /** Floating label animasyonu (Material Design pattern) */
+  floatingLabel?: boolean;
+  /** Floating label için ek sınıflar */
+  floatingLabelClassName?: string;
   /** Hata mesajı */
   error?: string;
   /** Başarı mesajı */
@@ -125,14 +131,14 @@ export interface InputProps
  * @param props.alwaysShowMessage - Mesajın her zaman görünür olması
  */
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ 
-    className, 
+  ({
+    className,
     wrapperClassName,
     messageClassName,
-    variant, 
-    size, 
+    variant,
+    size,
     isError,
-    disabled, 
+    disabled,
     error,
     success,
     loading,
@@ -140,8 +146,48 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     rightIcon,
     rightButton,
     alwaysShowMessage = false,
-    ...props 
+    label,
+    floatingLabel = false,
+    floatingLabelClassName,
+    value,
+    defaultValue,
+    onChange,
+    onFocus,
+    onBlur,
+    placeholder,
+    ...props
   }, ref) => {
+    // Floating label state management
+    const [isFocused, setIsFocused] = React.useState(false);
+    const [internalValue, setInternalValue] = React.useState(value || defaultValue || "");
+
+    // Floating label aktif mi kontrolü
+    const hasValue = internalValue !== "" && internalValue !== null && internalValue !== undefined;
+    const isLabelActive = isFocused || hasValue;
+
+    // Event handler'lar
+    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+      setIsFocused(true);
+      onFocus?.(e);
+    };
+
+    const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+      setIsFocused(false);
+      onBlur?.(e);
+    };
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setInternalValue(e.target.value);
+      onChange?.(e);
+    };
+
+    // Value değişikliklerini takip et
+    React.useEffect(() => {
+      if (value !== undefined) {
+        setInternalValue(value);
+      }
+    }, [value]);
+
     // Mesajı göster/gizle
     const showMessage = alwaysShowMessage || error || success;
     const messageType = error ? "error" : success ? "success" : "normal";
@@ -149,18 +195,39 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="space-y-1.5 w-full">
         <div className={cn("moonui-theme", inputWrapperVariants({ size }), wrapperClassName)}>
+          {/* Floating Label */}
+          {floatingLabel && label && (
+            <label
+              htmlFor={props.id}
+              className={cn(
+                "absolute transition-all duration-200 pointer-events-none",
+                leftIcon || loading ? "left-10" : "left-3",
+                "text-gray-500 dark:text-gray-400",
+                isLabelActive
+                  ? "top-0 -translate-y-1/2 text-xs bg-background dark:bg-gray-800 px-1"
+                  : "top-1/2 -translate-y-1/2 text-sm",
+                isFocused && "text-primary dark:text-primary",
+                !!error && "text-error",
+                disabled && "opacity-50",
+                floatingLabelClassName
+              )}
+            >
+              {label}
+            </label>
+          )}
+
           {leftIcon && (
             <div className="absolute left-3 text-gray-500 flex items-center justify-center pointer-events-none">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : leftIcon}
             </div>
           )}
-          
+
           <input
             className={cn(
-              inputVariants({ 
-                variant, 
-                size, 
-                isError: !!error || isError, 
+              inputVariants({
+                variant,
+                size,
+                isError: !!error || isError,
                 isSuccess: !!success,
                 isDisabled: disabled || loading,
                 hasLeftIcon: !!leftIcon || loading,
@@ -176,30 +243,36 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             data-success={!!success ? "" : undefined}
             aria-invalid={!!error || !!isError || undefined}
             aria-describedby={error ? `${props.id || ''}-error` : success ? `${props.id || ''}-success` : undefined}
+            value={value}
+            defaultValue={defaultValue}
+            onChange={handleChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            placeholder={floatingLabel ? (isLabelActive ? placeholder : "") : placeholder}
             {...props}
           />
-          
+
           {rightIcon && !loading && (
             <div className="absolute right-3 text-gray-500 flex items-center justify-center pointer-events-none">
               {rightIcon}
             </div>
           )}
-          
+
           {rightButton && (
             <div className="absolute right-3">
               {rightButton}
             </div>
           )}
-          
+
           {loading && !leftIcon && (
             <div className="absolute left-3 text-gray-500 flex items-center justify-center pointer-events-none">
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
             </div>
           )}
         </div>
-        
+
         {showMessage && (
-          <p 
+          <p
             className={cn(
               "text-xs transition-all",
               messageType === "error" && "text-error",

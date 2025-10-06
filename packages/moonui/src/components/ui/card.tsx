@@ -19,10 +19,10 @@ const cardVariants = cva(
         glass: "border border-white/20 bg-white/10 backdrop-blur-md dark:border-gray-700/30 dark:bg-gray-800/10",
       },
       size: {
-        default: "p-6",
-        sm: "p-4",
-        lg: "p-8",
-        xl: "p-10",
+        default: "",
+        sm: "",
+        lg: "",
+        xl: "",
       },
       radius: {
         default: "rounded-lg",
@@ -90,7 +90,7 @@ const CardHeader = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("moonui-theme", "flex flex-col space-y-1.5", className)}
+    className={cn("moonui-theme", "flex flex-col space-y-1.5 p-6", className)}
     {...props}
   />
 ));
@@ -124,7 +124,7 @@ const CardContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("moonui-theme", "pt-0", className)} {...props} />
+  <div ref={ref} className={cn("moonui-theme", "p-6 pt-0", className)} {...props} />
 ));
 CardContent.displayName = "CardContent";
 
@@ -134,7 +134,7 @@ const CardFooter = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("moonui-theme", "flex items-center pt-4", className)}
+    className={cn("moonui-theme", "flex items-center p-6 pt-0", className)}
     {...props}
   />
 ));
