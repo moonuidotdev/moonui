@@ -34,6 +34,7 @@ export {
 
 export type {
     AvatarProps as MoonUIAvatarProps,
+    AvatarGroupProps as MoonUIAvatarGroupProps,
 } from "./avatar";
 
 // Badge
@@ -98,6 +99,23 @@ export {
     CardZipInput as MoonUICardZipInput,
 } from "./card-input";
 
+// Carousel
+export {
+    Carousel as MoonUICarousel,
+    CarouselContent as MoonUICarouselContent,
+    CarouselItem as MoonUICarouselItem,
+    CarouselPrevious as MoonUICarouselPrevious,
+    CarouselNext as MoonUICarouselNext,
+    carouselContentVariants as moonUICarouselContentVariants,
+    carouselItemVariants as moonUICarouselItemVariants,
+    useCarousel,
+} from "./carousel";
+
+export type {
+    CarouselProps as MoonUICarouselProps,
+    CarouselApi as MoonUICarouselApi,
+} from "./carousel";
+
 // Checkbox
 export {
     Checkbox as MoonUICheckbox,
@@ -108,6 +126,9 @@ export {
 
 export type {
     CheckboxProps as MoonUICheckboxProps,
+    CheckboxGroupProps as MoonUICheckboxGroupProps,
+    CheckboxLabelProps as MoonUICheckboxLabelProps,
+    CheckboxWithLabelProps as MoonUICheckboxWithLabelProps,
 } from "./checkbox";
 
 // Collapsible
@@ -165,6 +186,8 @@ export {
     DialogFooter as MoonUIDialogFooter,
     DialogTitle as MoonUIDialogTitle,
     DialogDescription as MoonUIDialogDescription,
+    // #317: konvansiyon tamamlama
+    DialogForm as MoonUIDialogForm,
 } from "./dialog";
 
 // DraggableList
@@ -196,6 +219,7 @@ export {
 
 export type {
     FileUploadProps as MoonUIFileUploadProps,
+    FileUploadEntry as MoonUIFileUploadEntry,
 } from "./file-upload";
 
 // GestureDrawer
@@ -213,8 +237,25 @@ export type {
     InputProps as MoonUIInputProps,
 } from "./input";
 
+// InputOTP
+export {
+    InputOTP as MoonUIInputOTP,
+    InputOTPGroup as MoonUIInputOTPGroup,
+    InputOTPSlot as MoonUIInputOTPSlot,
+    InputOTPSeparator as MoonUIInputOTPSeparator,
+    inputOTPSlotVariants as moonUIInputOTPSlotVariants,
+} from "./input-otp";
+
+export type {
+    InputOTPProps as MoonUIInputOTPProps,
+} from "./input-otp";
+
 // Label
 export { Label as MoonUILabel } from "./label";
+
+export type {
+    LabelProps as MoonUILabelProps,
+} from "./label";
 
 // LockedComponent
 export {
@@ -246,6 +287,15 @@ export {
     Popover as MoonUIPopover,
     PopoverTrigger as MoonUIPopoverTrigger,
     PopoverContent as MoonUIPopoverContent,
+    // #317: CLAUDE.local.md "tüm componentler MoonUI prefix'iyle export edilir"
+    // konvansiyonu; bu 6 ad eksikti. Erişim sorunu YOKTU (aşağıda `export *` var),
+    // yalnız prefixli isimlendirme tamamlandı.
+    PopoverAnchor as MoonUIPopoverAnchor,
+    PopoverClose as MoonUIPopoverClose,
+    PopoverSeparator as MoonUIPopoverSeparator,
+    PopoverHeader as MoonUIPopoverHeader,
+    PopoverFooter as MoonUIPopoverFooter,
+    popoverContentVariants as moonUIPopoverContentVariants,
 } from "./popover";
 
 // Progress
@@ -265,6 +315,9 @@ export {
 
 export type {
     RadioGroupProps as MoonUIRadioGroupProps,
+    RadioGroupItemProps as MoonUIRadioGroupItemProps,
+    RadioLabelProps as MoonUIRadioLabelProps,
+    RadioItemWithLabelProps as MoonUIRadioItemWithLabelProps,
 } from "./radio-group";
 
 // RichTextEditor
@@ -296,11 +349,23 @@ export {
     SelectScrollDownButton as MoonUISelectScrollDownButton,
 } from "./select";
 
+export type {
+    SelectTriggerProps as MoonUISelectTriggerProps,
+    SelectItemProps as MoonUISelectItemProps,
+} from "./select";
+
 // Separator
-export { Separator as MoonUISeparator } from "./separator";
+// #643 (#667 ile açıldı) — TERS PARİTE kapatıldı: pro barrel `MoonUISeparatorProProps`i
+// dışa açıyordu, free tarafta MoonUI önekli yüzey eksikti.
+export { Separator as MoonUISeparator, separatorVariants as moonUISeparatorVariants } from "./separator";
+export type { SeparatorProps as MoonUISeparatorProps } from "./separator";
 
 // SimpleEditor
 export { SimpleEditor as MoonUISimpleEditor } from "./simple-editor";
+
+export type {
+    SimpleEditorProps as MoonUISimpleEditorProps,
+} from "./simple-editor";
 
 // Skeleton
 export {
@@ -317,6 +382,11 @@ export type {
 
 // Slider
 export { Slider as MoonUISlider } from "./slider";
+
+export type {
+    SliderProps as MoonUISliderProps,
+    SliderBaseProps as MoonUISliderBaseProps,
+} from "./slider";
 
 // SwipeableCard
 
@@ -349,6 +419,14 @@ export {
 
 // TagsInput
 export { TagsInput as MoonUITagsInput } from "./tags-input";
+
+export type {
+    TagsInputProps as MoonUITagsInputProps,
+} from "./tags-input";
+
+export type {
+    ToggleProps as MoonUIToggleProps,
+} from "./toggle";
 
 // Textarea
 export { Textarea as MoonUITextarea } from "./textarea";
@@ -383,7 +461,49 @@ export {
     TooltipTrigger as MoonUITooltipTrigger,
     TooltipContent as MoonUITooltipContent,
     TooltipProvider as MoonUITooltipProvider,
+    // #317: konvansiyon tamamlama (erişim `export * from "./tooltip"` ile zaten vardı)
+    TooltipArrow as MoonUITooltipArrow,
+    SimpleTooltip as MoonUISimpleTooltip,
+    tooltipVariants as moonUITooltipVariants,
 } from "./tooltip";
+
+// Kbd (issue #247) — standalone klavye-tuşu rozeti
+export {
+    Kbd as MoonUIKbd,
+    kbdVariants as moonUIKbdVariants,
+} from "./kbd";
+export type { KbdProps as MoonUIKbdProps } from "./kbd";
+
+// Rating (issue #247) — standalone yıldız değerlendirme
+export {
+    Rating as MoonUIRating,
+    ratingVariants as moonUIRatingVariants,
+} from "./rating";
+export type { RatingProps as MoonUIRatingProps } from "./rating";
+
+// Spinner (issue #247) — standalone yükleme göstergesi
+export {
+    Spinner as MoonUISpinner,
+    spinnerVariants as moonUISpinnerVariants,
+} from "./spinner";
+export type { SpinnerProps as MoonUISpinnerProps } from "./spinner";
+
+// Button Group (issue #257) — bitişik/segmentli buton grupları
+export {
+    ButtonGroup as MoonUIButtonGroup,
+    buttonGroupVariants as moonUIButtonGroupVariants,
+} from "./button-group";
+export type { ButtonGroupProps as MoonUIButtonGroupProps } from "./button-group";
+
+// Toggle Group (issue #257) — tek/çoklu seçim segmented toggle seti
+export {
+    ToggleGroup as MoonUIToggleGroup,
+    ToggleGroupItem as MoonUIToggleGroupItem,
+} from "./toggle-group";
+export type {
+    ToggleGroupProps as MoonUIToggleGroupProps,
+    ToggleGroupItemProps as MoonUIToggleGroupItemProps,
+} from "./toggle-group";
 
 // Also export without MoonUI prefix for backward compatibility
 export * from "./accordion";
@@ -395,6 +515,7 @@ export * from "./breadcrumb";
 export * from "./button";
 export * from "./card";
 export * from "./card-input";
+export * from "./carousel";
 export * from "./checkbox";
 export * from "./collapsible";
 export * from "./command";
@@ -402,6 +523,7 @@ export * from "./date-picker";
 export * from "./dialog";
 export * from "./dropdown-menu";
 export * from "./input";
+export * from "./input-otp";
 export * from "./label";
 export * from "./locked-component";
 export * from "./moon-logo";
@@ -425,3 +547,8 @@ export * from "./textarea";
 export * from "./toast";
 export * from "./toggle";
 export * from "./tooltip";
+export * from "./kbd";
+export * from "./rating";
+export * from "./spinner";
+export * from "./button-group";
+export * from "./toggle-group";

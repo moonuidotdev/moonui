@@ -15,20 +15,22 @@ import { cn } from "../../lib/utils";
  */
 
 const checkboxVariants = cva(
-  "peer shrink-0 border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:text-primary-foreground",
+  "peer shrink-0 border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:text-primary-foreground data-[state=indeterminate]:text-primary-foreground",
   {
     variants: {
       variant: {
-        default: "border-border bg-background data-[state=checked]:bg-primary data-[state=checked]:border-primary",
-        outline: "border-border bg-transparent data-[state=checked]:bg-primary data-[state=checked]:border-primary",
-        muted: "border-border bg-accent data-[state=checked]:bg-primary data-[state=checked]:border-primary",
-        ghost: "border-transparent bg-transparent hover:bg-accent data-[state=checked]:bg-primary data-[state=checked]:border-primary",
+        default: "border-border bg-background data-[state=checked]:bg-primary data-[state=checked]:border-primary data-[state=indeterminate]:bg-primary data-[state=indeterminate]:border-primary",
+        outline: "border-border bg-transparent data-[state=checked]:bg-primary data-[state=checked]:border-primary data-[state=indeterminate]:bg-primary data-[state=indeterminate]:border-primary",
+        muted: "border-border bg-accent data-[state=checked]:bg-primary data-[state=checked]:border-primary data-[state=indeterminate]:bg-primary data-[state=indeterminate]:border-primary",
+        ghost: "border-transparent bg-transparent hover:bg-accent data-[state=checked]:bg-primary data-[state=checked]:border-primary data-[state=indeterminate]:bg-primary data-[state=indeterminate]:border-primary",
       },
       size: {
         sm: "h-3.5 w-3.5",
+        md: "h-4 w-4",
+        lg: "h-5 w-5",
+        xl: "h-6 w-6",
+        /** @deprecated `md` kullanın — #319 kanonik skala; aynı çıktıyı üretir. */
         default: "h-4 w-4",
-        md: "h-5 w-5",
-        lg: "h-6 w-6",
       },
       radius: {
         none: "rounded-none",
@@ -46,7 +48,7 @@ const checkboxVariants = cva(
     },
     defaultVariants: {
       variant: "default",
-      size: "default",
+      size: "md",
       radius: "default",
       animation: "default",
     },
@@ -80,16 +82,18 @@ const Checkbox = React.forwardRef<
   checked,
   ...props 
 }, ref) => {
-  // Indeterminate state yönetimi
-  const [isIndeterminate, setIsIndeterminate] = React.useState(indeterminate);
-  
-  React.useEffect(() => {
-    setIsIndeterminate(indeterminate);
-  }, [indeterminate]);
+  // Radix'in `CheckedState` tipi: boolean | "indeterminate".
+  // "indeterminate" iletildiğinde Radix kökte `data-state="indeterminate"` +
+  // `aria-checked="mixed"` üretir ve Indicator'ı render eder — Minus ikonu ancak
+  // bu durumda görünür olur.
+  //
+  // Eskiden burada `false` iletiliyordu: kök hep `data-state="unchecked"` kalıyor,
+  // Radix Indicator unchecked durumda render edilmediği için Minus hiç görünmüyor
+  // ve ekran okuyucu "kısmen seçili" durumunu duyuramıyordu.
+  //
+  // `checked` undefined ise olduğu gibi geçirilir — uncontrolled kullanım korunur.
+  const effectiveChecked = indeterminate ? "indeterminate" : checked;
 
-  // Checked state override, indeterminate olduğunda
-  const effectiveChecked = isIndeterminate ? false : checked;
-  
   return (
     <CheckboxPrimitive.Root
       ref={ref}
@@ -103,7 +107,7 @@ const Checkbox = React.forwardRef<
           animation === "bounce" && "data-[state=checked]:animate-bounce"
         )}
       >
-        {isIndeterminate ? (
+        {indeterminate ? (
           <Minus className="h-[65%] w-[65%]" />
         ) : icon ? (
           icon
@@ -117,7 +121,7 @@ const Checkbox = React.forwardRef<
 Checkbox.displayName = CheckboxPrimitive.Root.displayName;
 
 // CheckboxGroup bileşeni
-interface CheckboxGroupProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface CheckboxGroupProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
    * Grup içi yerleşim - dikey veya yatay
    */
@@ -154,7 +158,7 @@ const CheckboxGroup = React.forwardRef<HTMLDivElement, CheckboxGroupProps>(
 CheckboxGroup.displayName = "CheckboxGroup";
 
 // CheckboxLabel bileşeni
-interface CheckboxLabelProps extends React.HTMLAttributes<HTMLLabelElement> {
+export interface CheckboxLabelProps extends React.HTMLAttributes<HTMLLabelElement> {
   /**
    * Checkbox bileşeni için HTML id
    */
@@ -195,7 +199,7 @@ const CheckboxLabel = React.forwardRef<HTMLLabelElement, CheckboxLabelProps>(
 CheckboxLabel.displayName = "CheckboxLabel";
 
 // Checkbox ve Label içeren bileşen
-interface CheckboxWithLabelProps extends CheckboxProps {
+export interface CheckboxWithLabelProps extends CheckboxProps {
   /**
    * Label içeriği
    */

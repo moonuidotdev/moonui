@@ -211,7 +211,6 @@ Releases are managed by maintainers.
 
 - **GitHub Issues** - Bug reports and feature requests
 - **GitHub Discussions** - General discussions and questions
-- **Discord** - Real-time chat with the community
 - **Twitter** - Updates and announcements
 
 ## 🙏 Recognition
@@ -225,9 +224,8 @@ Contributors will be:
 
 If you have questions, please:
 
-1. Check the [documentation](https://moonui.design/docs)
+1. Check the [documentation](https://moonui.dev/docs)
 2. Search [existing issues](https://github.com/oguzhanayyldz/moonuikit/issues)
 3. Ask in [GitHub Discussions](https://github.com/oguzhanayyldz/moonuikit/discussions)
-4. Join our [Discord server](https://discord.gg/moonui)
 
 Thank you for contributing to MoonUI Kit! 🎉

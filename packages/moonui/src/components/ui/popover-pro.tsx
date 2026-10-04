@@ -1,5 +1,46 @@
 "use client"
 
+/**
+ * #664 (S9) — ÖLÜ DOSYA. Silinmedi; gerekçesi aşağıda. Silmeden ÖNCE bu notu okuyun.
+ *
+ * ── DURUM: bu dosya hiçbir yerden erişilemiyor ───────────────────────────────
+ * Dört kanıt (2026-08-28 ölçümü):
+ *   1. Barrel'da yok      — `components/ui/index.ts`, `src/index.tsx` ve
+ *                           `popover.tsx` içinde `popover-pro` grep'i **0**.
+ *   2. Yayımlı yüzeyde yok — `packages/moonui/dist/index.d.ts` içinde
+ *                           `PopoverHeaderPro` / `PopoverContentProProps` **0**.
+ *   3. Tüketici yok       — repo genelinde bu dosyayı import eden **0** modül.
+ *   4. Kanonik başka yerde — docs'un GERÇEKTEN kullandığı Pro popover
+ *                           `MoonUIPopoverPro`'dur ve
+ *                           `packages/moonui-pro/src/components/ui/popover.tsx`te
+ *                           yaşar (`src/docs-config/popover.config.tsx:47-51`
+ *                           oradan import eder; yayımlı moonui-pro dist'inde var).
+ *
+ * ── NEDEN EXPORT EDİLMİYOR (kalıcı hüküm) ────────────────────────────────────
+ * Export etmek kusuru P3'ten P2'ye YÜKSELTİR: `customBackdrop` (:~215) ve
+ * `focusTrap` (:~219) ilan edilip varsayılanlarıyla destructure ediliyor ama
+ * gövdede HİÇ okunmuyor — public API'ye iki ölü prop eklemek olurdu.
+ * Ayrıca #667 registry kilidi: yayımlanmamış bir export eklenirse registry
+ * *tazelik* ya da *tutarlılık* kapısından biri mutlaka kırmızıya döner.
+ *
+ * ── NEDEN BU KOŞUDA SİLİNMEDİ (gerekçe — "zahmetli" DEĞİL) ───────────────────
+ * `scripts/lib/free-registry.js:285-288` free registry'yi diskteki dosya
+ * listesinden üretir ve barrel'da olmayan her modülü `excluded.notExported`
+ * altına yazar. Bu dosya şu an `free-registry.generated.json:27-29`ta öyle
+ * duruyor. Dosyayı silmek üretilen JSON'u ZORUNLU olarak değiştirir →
+ * `npm run check:free-registry` kırmızıya döner ve düzeltmenin tek yolu
+ * registry çıktısını yeniden üretmektir. Bu koşunun kısıtı registry generated
+ * dosyalarını yeniden üretmeyi yasaklıyor.
+ *
+ * ── YAPILACAK: #667 yayın kontrol listesinde sil ─────────────────────────────
+ * #667 zaten bump anında `build:free-registry` koşup çıktıyı commit'lemeyi
+ * planlıyor. Silme O ADIMLA BİRLİKTE yapılmalı — tek komut:
+ *     git rm packages/moonui/src/components/ui/popover-pro.tsx
+ *     npm run build:free-registry
+ * Silme kararı teknik olarak ONAYLI; bekleyen tek şey registry'yi yeniden
+ * üretme iznidir.
+ */
+
 import * as React from "react"
 import * as PopoverPrimitive from "@radix-ui/react-popover"
 import { motion, AnimatePresence, useSpring, useTransform } from "framer-motion"
@@ -171,10 +212,12 @@ const popoverContentVariants = cva(
       },
       size: {
         sm: "w-56 p-3",
-        default: "w-72 p-4",
+        md: "w-72 p-4",
         lg: "w-96 p-6",
         xl: "w-[32rem] p-8",
-        auto: "w-auto p-4"
+        auto: "w-auto p-4",
+        /** @deprecated `md` kullanın — #319 kanonik skala; aynı çıktıyı üretir. */
+        default: "w-72 p-4",
       },
       overlayBlur: {
         none: "",
@@ -186,7 +229,7 @@ const popoverContentVariants = cva(
     },
     defaultVariants: {
       variant: "default",
-      size: "default",
+      size: "md",
       overlayBlur: "none"
     }
   }

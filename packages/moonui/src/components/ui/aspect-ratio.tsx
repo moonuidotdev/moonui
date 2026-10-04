@@ -17,11 +17,15 @@ const aspectRatioVariants = cva(
   "relative overflow-hidden",
   {
     variants: {
+      // `variant` yalnız yüzey/kenarlık eksenini yönetir. Önceden her varyant
+      // ayrıca `rounded-md` taşıyordu ve `radius` ekseniyle çakışıyordu
+      // (aynı anda iki `rounded-*` sınıfı üretiliyordu). Köşe yuvarlaması artık
+      // TEK kaynaktan: `radius`.
       variant: {
-        default: "rounded-md bg-muted/10",
+        default: "bg-muted/10",
         ghost: "bg-transparent",
-        outline: "rounded-md border border-border",
-        card: "rounded-md bg-card shadow-sm",
+        outline: "border border-border",
+        card: "bg-card shadow-sm",
       },
       radius: {
         none: "rounded-none",
@@ -33,6 +37,8 @@ const aspectRatioVariants = cva(
     },
     defaultVariants: {
       variant: "default",
+      // Önceki davranış korunur: her varyant `rounded-md` taşıyordu.
+      radius: "md",
     },
   }
 )

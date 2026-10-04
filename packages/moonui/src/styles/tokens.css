@@ -1,5 +1,13 @@
-/* MoonUI Design Tokens - Namespaced to prevent conflicts */
+/* MoonUI Design Tokens
+ *
+ * Kapsam: hem :root hem .moonui-root.
+ * Component'ler hsl(var(--primary)) gibi ÖN EKSİZ değişkenler okur; token'lar
+ * yalnızca .moonui-root altında kalırsa ve tüketici bu sınıfı eklemezse
+ * component'ler renksiz kalır. :root varsayılan yolu çalışır kılar;
+ * .moonui-root ise token'ları izole etmek isteyen tüketici için korunur.
+ */
 
+:root,
 .moonui-root {
   /* === COLOR SYSTEM === */
   
@@ -65,33 +73,237 @@
   --error-800: 153 27 27;
   --error-900: 127 29 29;
   --error-950: 69 10 10;
-  
+
+  /* === MARKA PALETI ===
+   *
+   * MoonUI'nin imza gradient'i mor -> pembe (from-brand-600 to-brand-accent-600).
+   * Bu renkler daha once YALNIZCA sitenin sayfalarina hardcoded Tailwind sinifi
+   * olarak (purple-600, pink-500) yazilmisti; pakette HIC yoktu. Yani musteri
+   * paketi kurdugunda markanin gorunumunu elde etmesi imkansizdi.
+   *
+   * Degerler Tailwind'in purple/pink paletiyle BIREBIR ayni (HSL'e cevrildi),
+   * boylece mevcut render DEGISMEZ; degisen tek sey markanin artik
+   * degistirilebilir bir token olmasi.
+   */
+  --brand-50: 270 100% 98%;
+  --brand-100: 268.7 100% 95.5%;
+  --brand-200: 268.6 100% 91.8%;
+  --brand-300: 269.2 97.4% 85.1%;
+  --brand-400: 270 95.2% 75.3%;
+  --brand-500: 270.7 91% 65.1%;
+  --brand-600: 271.5 81.3% 55.9%;
+  --brand-700: 272.1 71.7% 47.1%;
+  --brand-800: 272.9 67.2% 39.4%;
+  --brand-900: 273.6 65.6% 32%;
+  --brand-950: 273.5 86.9% 21%;
+
+  --brand-accent-50: 327.3 73.3% 97.1%;
+  --brand-accent-100: 325.7 77.8% 94.7%;
+  --brand-accent-200: 325.9 84.6% 89.8%;
+  --brand-accent-300: 327.4 87.1% 81.8%;
+  --brand-accent-400: 328.6 85.5% 70.2%;
+  --brand-accent-500: 330.4 81.2% 60.4%;
+  --brand-accent-600: 333.3 71.4% 50.6%;
+  --brand-accent-700: 335.1 77.6% 42%;
+  --brand-accent-800: 335.8 74.4% 35.3%;
+  --brand-accent-900: 335.9 69% 30.4%;
+  --brand-accent-950: 336.2 83.9% 17.1%;
+
   /* Theme Colors */
   --background: 0 0% 100%;
-  --foreground: 222.2 47.4% 11.2%;
+  --foreground: 222.2 84% 4.9%;
   --card: 0 0% 100%;
-  --card-foreground: 222.2 47.4% 11.2%;
+  --card-foreground: 222.2 84% 4.9%;
   --popover: 0 0% 100%;
-  --popover-foreground: 222.2 47.4% 11.2%;
-  --primary: 222.2 47.4% 11.2%;
+  --popover-foreground: 222.2 84% 4.9%;
+
+  /* --primary BILEREK marka rengi DEGILDIR ve degistirilmez.
+   *
+   * Marka (mor/pembe) ayri bir ad altinda sunulur: --brand-* / --brand-accent-*
+   * (Tailwind: bg-brand-600, from-brand-600 to-brand-accent-600).
+   *
+   * Neden: --primary'yi mora cekmek, paketi kullanan TUM projelerin butonlarini
+   * surum yukseltmesinde sessizce maviden mora cevirirdi — kirici bir gorsel
+   * degisiklik ve tum renk akislarinin bozulmasi demekti. Marka rengi isteyen
+   * tuketici bilerek `bg-brand-600` yazar ya da "brand" preset'ini secer. */
+  --primary: 217.2 91.2% 51%;
+  /* Açık temada --primary MAVİ (L=59.8%); üzerine gelen metin/ikon de AÇIK
+     olmalı. Bu değer kardeşleriyle uyumsuz tek çiftti (L=11.2%, koyu) ve
+     `bg-primary text-primary-foreground` kullanan her yüzeyde — buton, rozet,
+     ilerleme noktası — mavi zemin üstünde KOYU metin üretiyordu.
+     Kardeş referanslar: --destructive-foreground ve --success-foreground
+     ikisi de 210 40% 98%. (Karanlık temada --primary zaten beyaz olduğu için
+     oradaki koyu foreground DOĞRU ve değiştirilmedi.) */
   --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 210 40% 96%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96%;
-  --accent-foreground: 222.2 47.4% 11.2%;
-  --destructive: 0 100% 50%;
+  --secondary: 217.2 32.6% 94%;
+  /* #284: --secondary rozetinde metin rolünde 4.26 (AA altı) idi -> 49%.
+     --primary 51%te KALIR: o token zemin rolünde ve beyaz metinle 4.70 taşıyor.
+     Aynı mavinin rolüne göre ayrışması --success (#280) ile aynı desendir.
+
+     %49 YETMEDİ — 44%'e çekildi. #284'ün hesabı 4.54 diyordu, ama gerçek
+     tarayıcı render'ı axe-core ile 4.45 ölçüldü (eşik 4.5): teorik HSL→RGB
+     hesabı ile tarayıcının ürettiği renk sınırda ayrışıyor (hesap rgb(11,98,239),
+     render #0e64ef). DERS: 4.5–4.6 aralığındaki "geçti" sonuçlarına güvenme,
+     gerçek render'da ölç. 44% teorik 5.37 verir ve ölçümde de geçer. */
+  --secondary-foreground: 217.2 91.2% 44%;
+  --muted: 217.2 32.6% 96%;
+  /* #284: --muted zemininde 4.31 (AA altı) idi -> 45% ile 4.56.
+     --background üzerinde zaten 4.76 geçiyordu; kırılan yüzey bg-muted (kbd).
+
+     %45 de YETMEDİ — 42%'ye çekildi. #284 yalnız --muted ve --background
+     yüzeylerine bakmış; --secondary (#ebeff5) HESABA KATILMAMIŞTI ve orada
+     gerçek render'da 4.42 ölçüldü (docs/components/card, "Secondary surface").
+     42% üç yüzeyde de geçer: secondary 4.90 · muted 5.13 · background 5.66.
+     Kademe seçiminde teorik hesabın gerçek render'dan ~0.1 yüksek çıktığı
+     gözlendi (bkz. --secondary-foreground notu), o yüzden sınıra yaslanılmadı. */
+  --muted-foreground: 215.4 16.3% 42%;
+  --accent: 217.2 32.6% 94%;
+  /* #647: --accent-foreground 51% idi -> 4.26 (AA 4.5 altı). Zemin (--accent, 94%)
+     --secondary ile BİREBİR aynı token değeri; #284'ün --secondary-foreground'da
+     uyguladığı düzeltmenin (51%→49%) aynısı burada da geçerli: aynı zemin + aynı
+     başlangıç L → aynı sonuç, 4.54. --accent zemin rolünde DEĞİŞMEDİ (dört yüzey de
+     --accent'i zemin, --accent-foreground'u metin olarak kullanıyor: toggle-group,
+     command/command-pro seçili satır, navbar aktif öğe, magnetic-button outline/ghost
+     hover — inline style `hsl(var(--accent-foreground))` okuduğu için component
+     kaynağına dokunmadan düzelir). Koyu tema zaten 14.11 → dokunulmadı. */
+  --accent-foreground: 217.2 91.2% 49%;
+  /* #327: 60.2% idi. HİÇBİR kullanımda AA'yı geçmiyordu — beyaz zeminde metin 3.76,
+     kendi foreground'uyla düz dolgu 3.59. 48%, her İKİ testi de geçen en açık değer
+     (4.86 / 4.64), yani marka rengine en yakın kalan seçenek. Koyu tema (0 63% 31%)
+     zaten 9.44 → dokunulmadı. #284'ün --primary onarımıyla aynı desen. */
+  --destructive: 0 84.2% 48%;
   --destructive-foreground: 210 40% 98%;
   --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 215 20.2% 65.1%;
+  /* #284: form kontrolü kenarlığı beyaz zeminde 1.23 idi (WCAG 1.4.11 eşiği 3.0,
+     metin eşiği 4.5 DEĞİL) -> 60% ile 3.11. --border AYRI token ve dekoratif
+     ayraçlarda kullanılıyor, 1.4.11 kapsamı dışı; bilinçli olarak değişmedi. */
+  --input: 214.3 31.8% 60%;
+  --ring: 217.2 91.2% 51%;
+
+  /* Durum renkleri. Tailwind preset'i bg-success/bg-warning/bg-error/bg-info/
+   * bg-caution siniflarini bu degiskenlere bagliyor; tanimsiz kalirlarsa o
+   * siniflar renksiz uretilir. */
+  /* Açık temada zemin, üzerine gelen açık metin (--success-foreground) için
+     fazla açıktı: beyaz metinle kontrast 3.18 (WCAG AA 4.5:1 altı). L=36% -> 29%
+     ile 4.69'a çıkar. --primary'de uygulanan düzeltmenin aynısı. */
+  --success: 142 76% 29%;
+  --success-foreground: 210 40% 98%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 24 10% 10%;
+  --error: 0 84% 60%;
+  --error-foreground: 210 40% 98%;
+  /* #313/#314/#323 dönüşümü sırasında çıktı: `--info` düz dolgu olarak kendi
+     foreground'uyla 3.47 veriyordu — `--destructive`in (#327) birebir aynı kusuru.
+     Kullanıcının #327'de seçtiği ilke burada da uygulandı: her iki testi geçen EN AÇIK
+     değer. 50% → düz 4.83, metin/beyaz 5.05. */
+  --info: 217 91% 50%;
+  --info-foreground: 210 40% 98%;
+  --caution: 38 92% 50%;
+  --caution-foreground: 24 10% 10%;
+
+  /* ---------------------------------------------------------------------------
+     #313 / #314 / #323 — YUMUŞAK-TON (subtle) semantik yüzeyler
+     ---------------------------------------------------------------------------
+     `--destructive` gibi DÜZ token'lar "dolu zemin + açık metin" içindir. Menü
+     item'ı, toast, rozet gibi yerlerde ise yumuşak bir tint + koyu metin gerekir.
+     Böyle bir token OLMADIĞI için 25 dosya ham Tailwind paletine (`bg-red-100
+     text-red-900`) düşmüştü → marka/tema özelleştirmesi bu varyantlara İŞLEMİYORDU.
+
+     Değerler bugünkü ham palet çiftlerinin birebir HSL karşılığıdır; yani dönüşüm
+     kontrastı DÜŞÜRMEZ (ölçüldü: 8.20 / 8.70 / 8.83 / 9.52 — hepsi korunur). */
+  --destructive-subtle: 0 93% 94%;
+  --destructive-subtle-foreground: 0 63% 31%;        /* 8.20:1 */
+  --success-subtle: 138 77% 97%;
+  --success-subtle-foreground: 144 61% 20%;          /* 8.70:1 */
+  --warning-subtle: 33 100% 97%;
+  --warning-subtle-foreground: 15 75% 28%;           /* 8.83:1 */
+  --info-subtle: 214 100% 97%;
+  --info-subtle-foreground: 224 64% 33%;             /* 9.52:1 */
+
+  /* #354: `primary` ailesi bu listede EKSİKTİ. Pro Sidebar'ın aktif öğesi
+     "primary metin + primary/10 zemin" deseni kullanıyordu; light temada bu
+     4.28:1 veriyor (gereken 4.5) — yani docs kabuğu her sayfada bir WCAG AA
+     ihlali basıyordu. Dark tarafta `--primary` neredeyse beyaz olduğu için
+     sorun yoktu (15.73:1, ölçüldü).
+
+     Zemin, bugünkü `primary/10` bileşiminin BİREBİR HSL karşılığı (beyaz üstüne
+     %10 primary = #e7f0fe) → görünüm DEĞİŞMEZ, yalnız metin koyulaşır. */
+  --primary-subtle: 217 92% 95%;
+  --primary-subtle-foreground: 217.2 91.2% 40%;      /* 6.21:1 */
+
+  --primary-50: 240 249 255;
+
+  /* Tailwind preset'i rounded-lg/md/sm'yi var(--radius)'a bagliyor.
+   * Bu degisken tanimsiz kalirsa o siniflar sessizce etkisiz olur. */
+  --radius: 0.5rem;
+
   --chart-1: 12 76% 61%;
   --chart-2: 173 58% 39%;
   --chart-3: 197 37% 24%;
   --chart-4: 43 74% 66%;
   --chart-5: 27 87% 67%;
-  
+
+  /* === BACKGROUND EFFECT PALETTES ===
+   * `backgrounds` ailesinin dekoratif katmanlari (parcacik, kabarcik, gradient) icin.
+   * Bunlar CANVAS'a cizilir; canvas CSS sinifi degil RENK STRINGI ister, bu yuzden
+   * component'ler bu token'lari `getComputedStyle` ile okuyup `hsl(...)` olarak kullanir.
+   *
+   * NEDEN AYRI BIR SET: `--chart-*` veri gorsellestirme icindir ve tamamen farkli bir
+   * palet (turuncu/teal/sari); dekoratif arka planlar mor/pembe/cyan kimligini tasir.
+   * Degerler component'lerdeki ONCEKI hardcoded hex'lerin BIREBIR HSL karsiligidir —
+   * token'a tasima gorunumu degistirmedi (26/26 renk geri cevrimde birebir esit).
+   *
+   * Tuketici bu degiskenleri ezerek tum efekt ailesini kendi markasina uyarlayabilir.
+   */
+
+  /* Paylasilan 5'li palet — bubble-background, floating-elements,
+     geometric-patterns, gradient-flow */
+  --bg-effect-1: 229.1 75.9% 65.9%;
+  --bg-effect-2: 269.7 36.7% 46.5%;
+  --bg-effect-3: 293.7 92.9% 78%;
+  --bg-effect-4: 280.2 77.5% 68.6%;
+  --bg-effect-5: 190.9 85.7% 49.2%;
+
+  /* 4'lu indigo/gul paleti — liquid-background */
+  --bg-accent-1: 238.7 83.5% 66.7%;
+  --bg-accent-2: 258.3 89.5% 66.3%;
+  --bg-accent-3: 330.4 81.2% 60.4%;
+  --bg-accent-4: 349.7 89.2% 60.2%;
+
+  /* 4'lu canli palet — particles, waves (ilk 3'u) */
+  --bg-vivid-1: 270.7 91% 65.1%;
+  --bg-vivid-2: 328.6 85.5% 70.2%;
+  --bg-vivid-3: 213.1 93.9% 67.8%;
+  --bg-vivid-4: 158.1 64.4% 51.6%;
+
+  /* Yildiz alani — starfield (#720).
+     `--bg-space` YALNIZ dekoratif degildir: `children` metni bu zeminin ustune
+     dusuyor, yani kontrast hesabina GIRER. `--bg-star` ile ciftin ayrimi #481'de
+     olculmustu (beyaz-ustune-beyaz 1.045:1) — degerler o cozumun aynisidir. */
+  --bg-star: 215 27.9% 16.9%;
+  --bg-space: 210 20% 98%;
+
+  /* 3'lu nebula paleti — starfield (#720).
+     Saf DEKORATIF bulut katmani (uzerine metin dusmez) → AA'ya tabi degil.
+     ALFA DEGERIN PARCASIDIR: eski hex'ler `#db278610` gibi 8 haneliydi (alfa
+     0x10/255 = 0.0627). Alfa dusurulurse katman 16x koyulasir; bu yuzden token
+     `H S% L% / A` biciminde tutulur — canvas `addColorStop` bu sozdizimini
+     kabul ediyor (Chrome 152'de olculdu). */
+  --bg-nebula-1: 328.3 71.4% 50.6% / 0.0627;
+  --bg-nebula-2: 188.7 94.5% 42.7% / 0.0627;
+  --bg-nebula-3: 45.4 93.4% 47.5% / 0.0627;
+
+  /* 5'li pastel mesh paleti — mesh-gradient (#720).
+     AYRI BIR SET, `--bg-effect-*` DEGIL: mesh'in kimligi cok acik pastellerdir
+     (L %89.8-94.7); EFFECT paleti (L %46.5-78) uzerine tasinsaydi component'in
+     gorunumu degisirdi. Token'a tasima gorunumu DEGISTIRMEZ kurali (bu blogun
+     bas yorumu) yeni bir grup gerektirdi. */
+  --bg-mesh-1: 325.7 77.8% 94.7%;
+  --bg-mesh-2: 268.6 100% 91.8%;
+  --bg-mesh-3: 250.5 95.2% 91.8%;
+  --bg-mesh-4: 226.5 100% 93.9%;
+  --bg-mesh-5: 325.9 84.6% 89.8%;
+
   /* === TYPOGRAPHY === */
   
   /* Font Families */
@@ -193,7 +405,43 @@
   --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
   --shadow-none: 0 0 #0000;
-  
+
+  /* === #664 S3: DEKORATİF HAM-LİTERAL TOKEN'LARI ===
+   *
+   * Bu grup, hiçbir mevcut semantik token'a (--primary/--success/--warning/…)
+   * KARŞILIK GELMEYEN dekoratif renkleri barındırır — durum anlamı taşımazlar,
+   * yalnız sabit bir görsel kimliğin (glow/neon efekti, yıldız rozeti rengi,
+   * sürükleme önizleme gölgesi) parçasıdır. §9 gereği var olan rengi KAYDIRMIYORUZ:
+   * her değer, değiştirdiği ham Tailwind/rgba literaliyle PİKSEL-ÖZDEŞ tutulur —
+   * tek fark artık tek merkezden (burada) tanımlı olmaları ve `rgba(`/hex taramasının
+   * component kaynağında bir daha bunları YAKALAMAMASI.
+   *
+   * RGB üçlüsü formatı (`R G B`, boşlukla ayrık) — `--secondary-500` ile aynı kalıp.
+   *
+   * ⚠️ ALFA AYIRICISI EĞİK ÇİZGİDİR — VİRGÜL DEĞİL (#738):
+   *
+   *     rgb(var(--glow-blue-rgb))            ✓ alfasız (rating.tsx:218)
+   *     rgb(var(--glow-blue-rgb) / 0.5)      ✓ CSS Color 4 boşluklu sözdizimi
+   *     rgba(var(--glow-blue-rgb), 0.5)      ✗ ÖLÜ — bildirim tümden düşer
+   *
+   * Token boşluklu üçlü olduğu için virgüllü alfa `rgba(59 130 246, 0.5)`e açılır;
+   * CSS Color 4 eski virgüllü ve yeni boşluklu sözdizimlerini KARIŞTIRMAYA izin
+   * vermez. Hata sessizdir: konsola bir şey yazılmaz, gölge yalnızca çizilmez.
+   * Bu satırın eski hâli virgüllü formu "kanıtlı kalıp" diye gösteriyordu ve #664
+   * göçünde 18 bildirimin ölmesinin doğrudan sebebi oldu. Gerçek kanıtlı kalıp
+   * (slider.tsx/switch.tsx/progress.tsx) ALFASIZDIR — o yüzden sağlam kalmıştı.
+   * Kapı: `npm run check:raw-color-literals` (#711 (a) ekseni).
+   */
+  --glow-blue-rgb: 59 130 246;     /* Tailwind blue-500 — button "glow", dialog/menubar/context-menu "neon" gölgesi */
+  --glow-green-rgb: 74 222 128;    /* Tailwind green-400 — button "neon" gölgesi */
+  --glow-purple-rgb: 139 92 246;   /* Tailwind violet-500 — tabs-pro "neon" gölgesi */
+  --rating-star-rgb: 251 191 36;   /* Tailwind amber-400 — rating yıldız dolgu rengi (durum değil, marka rengi) */
+
+  /* Sürükleme önizleme gölgesi: draggable-list `dragPreviewStyle="clone"` — siyah
+   * gölge kasıtlı olarak tema-bağımsız (koyu temada da beyaz değil, siyah gölge
+   * kullanılır — çoğu tasarım sisteminin box-shadow konvansiyonu budur). */
+  --drag-preview-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+
   /* Elevation System */
   --elevation-0: var(--shadow-none);
   --elevation-1: var(--shadow-sm);
@@ -326,24 +574,131 @@
   --card-foreground: 213 31% 91%;
   --popover: 224 71% 4%;
   --popover-foreground: 213 31% 91%;
+  /* #368 rol denetimi: --primary koyu temada BİLİNÇLİ near-white — esas rolü
+     ZEMİN (`bg-primary text-primary-foreground` butonu 19.81 taşır, ölçüldü).
+     --foreground (91%) ile yalnız 1.19 verdiği için "aktif/vurgulu" ayrımı
+     koyu temada RENKLE taşınamaz; stepper/form-wizard bu ayrımı dolgu + Check
+     ikonu + font-semibold ile veriyor (stepper.tsx:323-330). Vurgu METNİ
+     gereken yerde --primary-subtle(-foreground) çifti kullanılır (#354).
+     Değeri maviye çekmek, paketi kullanan TÜM projelerin koyu tema butonlarını
+     sürüm yükseltmesinde sessizce değiştirirdi → değer DEĞİŞTİRİLMEDİ. */
   --primary: 210 40% 98%;
   --primary-foreground: 222.2 47.4% 1.2%;
   --secondary: 222.2 84% 4.9%;
   --secondary-foreground: 210 40% 98%;
-  --muted: 223 47% 11%;
-  --muted-foreground: 215.4 16.3% 56.9%;
+  /* #368: --muted DEKORATİF YÜZEY rolünde (Skeleton `bg-muted`, kbd, tabs).
+     11%'te gerçek kart zemininden (#111827, bkz. --input notu) ayrışmıyordu:
+     1.01 — skeleton barları koyu temada fiilen GÖRÜNMÜYORDU. Aynı hue/sat
+     korunarak yalnız L 11→22 (rgb(15,22,41)→rgb(30,45,82), aynı rengin 2×
+     açığı): kart üstünde 1.31, --background üstünde 1.49 — yüzey-yüzey ayrımı
+     için ≥1.3 pratik alt sınırı geçer. */
+  --muted: 223 47% 22%;
+  /* #368: --muted 22% olunca 56.9% metin `bg-muted` üstünde 4.06'ya düşüyordu
+     (AA 4.5 altı — #284'ün açık temada onardığı çiftin birebir aynısı).
+     62% ile: muted üstünde 4.80, kart (#111827) üstünde 6.29, --background
+     üstünde 7.15 — tümü AA üstü. */
+  --muted-foreground: 215.4 16.3% 62%;
   --accent: 216 34% 17%;
   --accent-foreground: 210 40% 98%;
-  --destructive: 0 63% 31%;
+  /* #368: --destructive, --success ile AYNI çift-rol tuzağındaydı: açık temada
+     `bg-destructive` ZEMİN, koyu temada `text-destructive` METİN (free 7 + pro
+     36 dosya). 31% metin olarak okunmuyordu: gerçek kart zemini (#111827)
+     üstünde 1.79 (AA 4.5 ister). 0 84% 60% (= :root --error; koyu tema o
+     değeri zaten miras alıyor) metin rolünde kart üstünde 4.69, --background
+     üstünde 5.33 taşır; hata kenarlıkları da 1.4.11 eşiğini geçer (3.0 ister,
+     ölçülen 4.69 — eskiden 1.80 idi). Trade-off: dolgu rolünde beyaz
+     foreground ile 3.61'e iner (büyük metin/UI eşiği 3.0 üstü) — --success'in
+     koyu temadaki kararının aynısı: metin rolü önceliklidir. */
+  --destructive: 0 84% 60%;
+  /* `--success` iki rolde birden kullanılıyor: açık temada `bg-success` ZEMİN
+     (üstünde açık metin), karanlık temada `text-success` METİN (koyu zemin
+     üstünde). Açık tema için 29%'e koyulaştırıldı; karanlık temada o değer
+     metin olarak okunmuyordu (3.30) — burada 36% korunur (4.86). */
+  --success: 142 76% 36%;
   --destructive-foreground: 210 40% 98%;
+
+  /* #313/#314/#323 — koyu tema subtle yüzeyleri.
+     Bunlar bugünkü `dark:bg-red-900/20` kompozisyonunun ARİTMETİK karşılığı DEĞİL:
+     çok koyu lacivert zemine %20 tint bindirince hue zemine kayıyor ve ortaya
+     semantik olmayan bir renk çıkıyor (destructive için 312° = macenta). Bunun
+     yerine semantik hue KORUNARAK kasıtlı koyu tint'ler seçildi; kontrast ölçüldü. */
+  --destructive-subtle: 0 63% 12%;
+  --destructive-subtle-foreground: 0 91% 71%;        /* 6.43:1 */
+  --success-subtle: 142 70% 10%;
+  --success-subtle-foreground: 141 84% 93%;          /* 14.02:1 */
+  --warning-subtle: 25 80% 11%;
+  --warning-subtle-foreground: 34 100% 92%;          /* 14.43:1 */
+  --info-subtle: 217 80% 13%;
+  --info-subtle-foreground: 214 95% 93%;             /* 14.11:1 */
+
+  /* #354: koyu temada mevcut görünüm KORUNUYOR — bugünkü bileşimin birebir
+     karşılığı (near-white/10 near-black üstüne). Dark zaten geçiyordu; buradaki
+     amaç token ailesini tamamlamak, dark'ın rengini değiştirmek değil. */
+  --primary-subtle: 225 18% 13%;
+  --primary-subtle-foreground: 210 40% 98%;          /* 15.73:1 */
   --border: 216 34% 17%;
-  --input: 216 34% 17%;
-  --ring: 216 34% 17%;
+  /* #284: koyu temada form kontrolü kenarlığı 1.36 idi -> 40% ile ~3.1.
+     Not: --input switch.tsx:27'de kapalı track ZEMİNİ olarak da kullanılıyor;
+     track eskiden dark:bg-gray-700/70 ile hardcode ediliyordu, bu değer o
+     görünüme yakındır. --border (216 34% 17%) dekoratif, dokunulmadı.
+     46%: kenarlıklar pratikte --background (4%) değil bg-card (rgb 17,24,39)
+     üzerinde duruyor; tarayıcıda ölçülen gerçek zemine göre 3.37. */
+  --input: 216 34% 46%;
+  /* #473: --ring KARANLIK temada --border ile birebir aynıydı (216 34% 17%) —
+     kopyala-yapıştır kalıntısı. Oysa aydınlık temada canlı mavi (217.2 91.2% 51%).
+     --border "dekoratif" diye bilinçle bırakılabilir ama --ring odak GÖSTERGESİDİR;
+     WCAG 1.4.11 (non-text ≥3:1) doğrudan kapsar ve 52 dosya `ring-ring` kullanıyor.
+
+     Ölçülen kontrast (eski → yeni), bu bloğun KENDİ zemin değerlerine karşı:
+       --background (224 71% 4%)   1.36 → 5.52
+       --card       (224 71% 4%)   1.36 → 5.52
+       --muted      (223 47% 22%)  1.09 → 3.72   ← eskisi pratikte GÖRÜNMEZDİ
+     (gerçek tarayıcıda hesaplanan token değerleriyle doğrulandı; odak
+      box-shadow'u rgb(60,131,246) = hsl(217.2 91.2% 60%))
+
+     Değer aydınlık temanın rengi ve doygunluğuyla aynı (217.2 91.2%), yalnız
+     karanlık zeminde okunacak şekilde açıldı (51% → 60%). */
+  --ring: 217.2 91.2% 60%;
   --chart-1: 220 70% 50%;
   --chart-2: 160 60% 45%;
   --chart-3: 30 80% 55%;
   --chart-4: 280 65% 60%;
   --chart-5: 340 75% 55%;
+
+  /* === BACKGROUND EFFECT PALETTES (dark) ===
+   * Degerler #488/#499'da WCAG bagil parlaklikla dogrulanmis dark paletlerdir
+   * (ornek: --bg-effect-2 icin kontrast 3.16 → 7.40, zemin #030711). */
+  --bg-effect-1: 234.5 89.5% 73.9%;
+  --bg-effect-2: 255.1 91.7% 76.3%;
+  --bg-effect-3: 327.4 87.1% 81.8%;
+  --bg-effect-4: 291.1 93.1% 82.9%;
+  --bg-effect-5: 187 92.4% 69%;
+
+  --bg-accent-1: 234.5 89.5% 73.9%;
+  --bg-accent-2: 255.1 91.7% 76.3%;
+  --bg-accent-3: 328.6 85.5% 70.2%;
+  --bg-accent-4: 351.3 94.5% 71.4%;
+
+  --bg-vivid-1: 258.3 89.5% 66.3%;
+  --bg-vivid-2: 330.4 81.2% 60.4%;
+  --bg-vivid-3: 217.2 91.2% 59.8%;
+  --bg-vivid-4: 160.1 84.1% 39.4%;
+
+  /* starfield (#720) — koyu temada beyaz yildiz / siyah uzay */
+  --bg-star: 0 0% 100%;
+  --bg-space: 0 0% 0%;
+
+  /* starfield nebula (#720) — koyu temada neon, alfa 0x20/255 = 0.1255 */
+  --bg-nebula-1: 300 100% 50% / 0.1255;
+  --bg-nebula-2: 180 100% 50% / 0.1255;
+  --bg-nebula-3: 60 100% 50% / 0.1255;
+
+  /* mesh-gradient (#720) — koyu temada derin mor set */
+  --bg-mesh-1: 263.4 69.3% 42.2%;
+  --bg-mesh-2: 262.1 83.3% 57.8%;
+  --bg-mesh-3: 238.7 83.5% 66.7%;
+  --bg-mesh-4: 258.3 89.5% 66.3%;
+  --bg-mesh-5: 263.5 67.4% 34.9%;
 }
 
 /* === KEYFRAMES === */

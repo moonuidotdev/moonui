@@ -32,11 +32,11 @@ const toastVariants = cva(
         destructive:
           "destructive group border-destructive bg-destructive text-destructive-foreground",
         success:
-          "border-green-200 bg-green-50 text-green-900 dark:border-green-800 dark:bg-green-900/20 dark:text-green-100",
+          "border-success-subtle-foreground/20 bg-success-subtle text-success-subtle-foreground",
         warning:
-          "border-orange-200 bg-orange-50 text-orange-900 dark:border-orange-800 dark:bg-orange-900/20 dark:text-orange-100",
+          "border-warning-subtle-foreground/20 bg-warning-subtle text-warning-subtle-foreground",
         info:
-          "border-blue-200 bg-blue-50 text-blue-900 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-100",
+          "border-info-subtle-foreground/20 bg-info-subtle text-info-subtle-foreground",
       },
     },
     defaultVariants: {
@@ -86,13 +86,16 @@ const ToastClose = React.forwardRef<
   <ToastPrimitives.Close
     ref={ref}
     className={cn(
-      "absolute right-1 top-1 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-1 group-hover:opacity-100 group-[.destructive]:text-red-300 group-[.destructive]:hover:text-red-50 group-[.destructive]:focus:ring-red-400 group-[.destructive]:focus:ring-offset-red-600",
+      "absolute right-1 top-1 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-1 group-hover:opacity-100 group-[.destructive]:text-destructive-foreground/70 group-[.destructive]:hover:text-destructive-foreground group-[.destructive]:focus:ring-destructive-foreground/40 group-[.destructive]:focus:ring-offset-destructive",
       className
     )}
     toast-close=""
     {...props}
   >
     <X className="h-4 w-4" />
+    {/* İkon-only kapatma düğmesinin erişilebilir bir ismi olmalı (WCAG 4.1.2);
+        aynı desen dialog.tsx'teki kapatma düğmesinde de kullanılıyor. */}
+    <span className="sr-only">Close</span>
   </ToastPrimitives.Close>
 ));
 ToastClose.displayName = ToastPrimitives.Close.displayName;
@@ -157,7 +160,22 @@ const addToRemoveQueue = (toastId: string) => {
   toastTimeouts.set(toastId, timeout);
 };
 
-const reducer = (state: State, action: any): State => {
+/**
+ * Store eylemleri. Önceden `action: any` idi (#664 S1): `dispatch({ type: "TYPO" })`
+ * gibi bir çağrı sessizce `default` dalına düşüp hiçbir şey yapmıyordu ve tip
+ * denetimi bunu yakalayamıyordu. Ayrımlı birlik (discriminated union) o dalı
+ * derleme zamanına taşır.
+ *
+ * Pro ikiziyle (`packages/moonui-pro/src/components/ui/toast.tsx`, #651) birebir
+ * aynı birlik — ikiz parite kapısının koruduğu eşleşme.
+ */
+type ToastStoreAction =
+  | { type: "ADD_TOAST"; toast: ToastData }
+  | { type: "UPDATE_TOAST"; toast: Partial<ToastData> & { id: string } }
+  | { type: "DISMISS_TOAST"; toastId?: string }
+  | { type: "REMOVE_TOAST"; toastId?: string };
+
+const reducer = (state: State, action: ToastStoreAction): State => {
   switch (action.type) {
     case "ADD_TOAST":
       return {
@@ -217,7 +235,7 @@ const listeners: Array<(state: State) => void> = [];
 let memoryState: State = { toasts: [] };
 let toastCounter = 0;
 
-function dispatch(action: any) {
+function dispatch(action: ToastStoreAction) {
   memoryState = reducer(memoryState, action);
   listeners.forEach((listener) => {
     listener(memoryState);

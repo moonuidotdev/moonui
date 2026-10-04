@@ -26,13 +26,15 @@ const commandVariants = cva(
       },
       size: {
         sm: "min-h-[200px]",
-        default: "min-h-[300px]",
+        md: "min-h-[300px]",
         lg: "min-h-[400px]",
+        /** @deprecated `md` kullanın — #319 kanonik skala; aynı çıktıyı üretir. */
+        default: "min-h-[300px]",
       },
     },
     defaultVariants: {
       variant: "default",
-      size: "default",
+      size: "md",
     },
   }
 )
@@ -52,7 +54,11 @@ const Command = React.forwardRef<
     {...props}
   />
 ))
-Command.displayName = CommandPrimitive.displayName
+// NOT: cmdk primitive'leri displayName tanımlamaz (Radix'ten farklı olarak). Bu yüzden
+// `CommandPrimitive.*.displayName` okumak `undefined` üretiyordu ve React DevTools ile hata
+// mesajlarında bileşenler isimsiz görünüyordu. Kütüphane genelindeki konvansiyona uyarak
+// displayName'ler açık string olarak verilir.
+Command.displayName = "Command"
 
 // CommandDialog bileşeni
 interface CommandDialogProps extends React.ComponentProps<typeof Dialog> {
@@ -100,7 +106,7 @@ const CommandInput = React.forwardRef<
     />
   </div>
 ))
-CommandInput.displayName = CommandPrimitive.Input.displayName
+CommandInput.displayName = "CommandInput"
 
 // CommandList bileşeni
 interface CommandListProps 
@@ -116,7 +122,7 @@ const CommandList = React.forwardRef<
     {...props}
   />
 ))
-CommandList.displayName = CommandPrimitive.List.displayName
+CommandList.displayName = "CommandList"
 
 // CommandEmpty bileşeni
 interface CommandEmptyProps 
@@ -132,7 +138,7 @@ const CommandEmpty = React.forwardRef<
     {...props}
   />
 ))
-CommandEmpty.displayName = CommandPrimitive.Empty.displayName
+CommandEmpty.displayName = "CommandEmpty"
 
 // CommandGroup bileşeni
 interface CommandGroupProps 
@@ -151,7 +157,7 @@ const CommandGroup = React.forwardRef<
     {...props}
   />
 ))
-CommandGroup.displayName = CommandPrimitive.Group.displayName
+CommandGroup.displayName = "CommandGroup"
 
 // CommandSeparator bileşeni
 interface CommandSeparatorProps 
@@ -163,11 +169,23 @@ const CommandSeparator = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <CommandPrimitive.Separator
     ref={ref}
+    /**
+     * #308-6: cmdk, Separator'a `role="separator"` basıyor ve bu eleman
+     * `CommandList`'in (`role="listbox"`) çocuğu oluyor → listbox'ın izinli çocuğu
+     * yalnız `option`/`group` olduğu için axe `aria-required-children` (critical) veriyordu.
+     *
+     * `role` EZİLEMİYOR: cmdk 1.1.1 `{...props, "cmdk-separator":"", role:"separator"}`
+     * sırasıyla yazıyor, yani kendi rolü prop'lardan SONRA geliyor (kaynak doğrulandı).
+     * `aria-hidden` ise prop yayılımının içinde olduğu için geçiyor — ve ayraç zaten
+     * tümüyle dekoratif olduğundan erişilebilirlik ağacından çıkarılması DOĞRU davranış.
+     * Böylece listbox'ın sahiplendiği çocuklar arasında görünmez.
+     */
+    aria-hidden="true"
     className={cn("moonui-theme", "-mx-1 h-px bg-border", className)}
     {...props}
   />
 ))
-CommandSeparator.displayName = CommandPrimitive.Separator.displayName
+CommandSeparator.displayName = "CommandSeparator"
 
 // CommandItem bileşeni
 interface CommandItemProps 
@@ -186,7 +204,7 @@ const CommandItem = React.forwardRef<
     {...props}
   />
 ))
-CommandItem.displayName = CommandPrimitive.Item.displayName
+CommandItem.displayName = "CommandItem"
 
 // CommandShortcut bileşeni - utility component
 const CommandShortcut = ({
@@ -215,4 +233,17 @@ export {
   CommandItem,
   CommandShortcut,
   CommandSeparator,
+}
+
+// #308-5: Sekiz Props interface'inin HİÇBİRİ export edilmiyordu → tüketici sarmalayıcı
+// yazarken tipi yeniden türetmek zorundaydı.
+export type {
+  CommandProps,
+  CommandDialogProps,
+  CommandInputProps,
+  CommandListProps,
+  CommandEmptyProps,
+  CommandGroupProps,
+  CommandSeparatorProps,
+  CommandItemProps,
 }

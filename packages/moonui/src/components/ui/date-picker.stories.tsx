@@ -1,3 +1,7 @@
+// NOT (#294): Bu dosya `date`/`onDateChange`, `dateRange`/`onDateRangeChange`,
+// `month`/`onMonthChange` gibi UYDURMA prop'lar kullanıyordu; dört bileşenin de
+// gerçek yüzeyi `value`/`onChange`. Aynı kurgu #283'te test dosyasında da vardı.
+// Bu yüzden paket tsc'sinde 4 hata üretiyordu.
 "use client"
 
 import type { Meta, StoryObj } from '@storybook/react';
@@ -18,10 +22,10 @@ const meta: Meta<typeof DatePicker> = {
   },
   tags: ['autodocs'],
   argTypes: {
-    date: {
+    value: {
       description: 'The selected date',
     },
-    onDateChange: {
+    onChange: {
       description: 'Callback function when date changes',
     },
     disabled: {
@@ -43,8 +47,8 @@ export const Default: Story = {
         <div>
           <Label>Select Date</Label>
           <DatePicker 
-            date={date} 
-            onDateChange={setDate}
+            value={date} 
+            onChange={setDate}
           />
         </div>
         {date && (
@@ -66,8 +70,8 @@ export const WithoutDefaultDate: Story = {
         <div>
           <Label>Select Date</Label>
           <DatePicker 
-            date={date} 
-            onDateChange={setDate}
+            value={date} 
+            onChange={setDate}
           />
         </div>
         {date && (
@@ -89,8 +93,8 @@ export const Disabled: Story = {
         <div>
           <Label>Disabled Date Picker</Label>
           <DatePicker 
-            date={date} 
-            onDateChange={setDate}
+            value={date} 
+            onChange={setDate}
             disabled={true}
           />
         </div>
@@ -103,7 +107,7 @@ export const DateRange: Story = {
   render: () => {
     const [dateRange, setDateRange] = useState<{
       from: Date | undefined;
-      to: Date | undefined;
+      to?: Date | undefined;
     }>({ from: undefined, to: undefined });
     
     return (
@@ -111,8 +115,8 @@ export const DateRange: Story = {
         <div>
           <Label>Select Date Range</Label>
           <DateRangePicker 
-            dateRange={dateRange} 
-            onDateRangeChange={setDateRange}
+            value={dateRange} 
+            onChange={setDateRange}
           />
         </div>
         {(dateRange.from || dateRange.to) && (
@@ -135,8 +139,8 @@ export const DateTime: Story = {
         <div>
           <Label>Select Date and Time</Label>
           <DateTimePicker 
-            date={dateTime} 
-            onDateChange={setDateTime}
+            value={dateTime} 
+            onChange={setDateTime}
           />
         </div>
         {dateTime && (
@@ -158,8 +162,8 @@ export const MonthOnly: Story = {
         <div>
           <Label>Select Month</Label>
           <MonthPicker 
-            month={month} 
-            onMonthChange={setMonth}
+            value={month} 
+            onChange={setMonth}
           />
         </div>
         {month && (
@@ -176,7 +180,9 @@ export const FormExample: Story = {
   render: () => {
     const [formData, setFormData] = useState({
       birthDate: undefined as Date | undefined,
-      eventDateRange: { from: undefined as Date | undefined, to: undefined as Date | undefined },
+      // `to` OPSİYONEL: DateRangePicker imzası `to?: Date | undefined` (#289) —
+      // kullanıcı yalnız başlangıç tarihini seçtiğinde `to` hiç gelmez.
+      eventDateRange: { from: undefined, to: undefined } as { from: Date | undefined; to?: Date | undefined },
       appointmentDateTime: undefined as Date | undefined,
       reportingMonth: undefined as Date | undefined,
     });
@@ -186,32 +192,32 @@ export const FormExample: Story = {
         <div className="space-y-2">
           <Label>Birth Date</Label>
           <DatePicker 
-            date={formData.birthDate} 
-            onDateChange={(date) => setFormData(prev => ({ ...prev, birthDate: date }))}
+            value={formData.birthDate} 
+            onChange={(date) => setFormData(prev => ({ ...prev, birthDate: date }))}
           />
         </div>
         
         <div className="space-y-2">
           <Label>Event Date Range</Label>
           <DateRangePicker 
-            dateRange={formData.eventDateRange} 
-            onDateRangeChange={(range) => setFormData(prev => ({ ...prev, eventDateRange: range }))}
+            value={formData.eventDateRange} 
+            onChange={(range) => setFormData(prev => ({ ...prev, eventDateRange: range }))}
           />
         </div>
         
         <div className="space-y-2">
           <Label>Appointment Date & Time</Label>
           <DateTimePicker 
-            date={formData.appointmentDateTime} 
-            onDateChange={(date) => setFormData(prev => ({ ...prev, appointmentDateTime: date }))}
+            value={formData.appointmentDateTime} 
+            onChange={(date) => setFormData(prev => ({ ...prev, appointmentDateTime: date }))}
           />
         </div>
         
         <div className="space-y-2">
           <Label>Reporting Month</Label>
           <MonthPicker 
-            month={formData.reportingMonth} 
-            onMonthChange={(month) => setFormData(prev => ({ ...prev, reportingMonth: month }))}
+            value={formData.reportingMonth} 
+            onChange={(month) => setFormData(prev => ({ ...prev, reportingMonth: month }))}
           />
         </div>
         
@@ -247,8 +253,8 @@ export const CustomFormats: Story = {
         <div>
           <Label>Date with Custom Format</Label>
           <DatePicker 
-            date={date} 
-            onDateChange={setDate}
+            value={date} 
+            onChange={setDate}
           />
         </div>
         {date && (
@@ -279,7 +285,7 @@ export const AllVariants: Story = {
     const [singleDate, setSingleDate] = useState<Date | undefined>(new Date());
     const [dateRange, setDateRange] = useState<{
       from: Date | undefined;
-      to: Date | undefined;
+      to?: Date | undefined;
     }>({ from: new Date(), to: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) });
     const [dateTime, setDateTime] = useState<Date | undefined>(new Date());
     const [month, setMonth] = useState<Date | undefined>(new Date());
@@ -289,32 +295,32 @@ export const AllVariants: Story = {
         <div className="space-y-2">
           <Label>Single Date</Label>
           <DatePicker 
-            date={singleDate} 
-            onDateChange={setSingleDate}
+            value={singleDate} 
+            onChange={setSingleDate}
           />
         </div>
         
         <div className="space-y-2">
           <Label>Date Range</Label>
           <DateRangePicker 
-            dateRange={dateRange} 
-            onDateRangeChange={setDateRange}
+            value={dateRange} 
+            onChange={setDateRange}
           />
         </div>
         
         <div className="space-y-2">
           <Label>Date & Time</Label>
           <DateTimePicker 
-            date={dateTime} 
-            onDateChange={setDateTime}
+            value={dateTime} 
+            onChange={setDateTime}
           />
         </div>
         
         <div className="space-y-2">
           <Label>Month Only</Label>
           <MonthPicker 
-            month={month} 
-            onMonthChange={setMonth}
+            value={month} 
+            onChange={setMonth}
           />
         </div>
       </div>

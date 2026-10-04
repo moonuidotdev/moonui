@@ -6,7 +6,91 @@ import { Check, ChevronRight, Circle } from "lucide-react"
 
 import { cn } from "../../lib/utils"
 
-const DropdownMenu = DropdownMenuPrimitive.Root
+/* #645 — Menü açıkken Tab hiçbir şey yapmıyordu.
+ *
+ * KÖK NEDEN (Radix kaynağı, `@radix-ui/react-menu` → `MenuContentImpl`):
+ *   if (isKeyDownInside) { if (event.key === "Tab") event.preventDefault(); ... }
+ * Radix, Tab'ı bilinçli olarak yutuyor ("menus should not be navigated using tab
+ * key") ama karşılığında HİÇBİR ŞEY yapmıyor — menü ne kapanıyor ne odak
+ * ilerliyor. Üstelik `modal` menüde `FocusScope` da `trapped` olduğu için odak
+ * konteynerden çıkamıyor. Yani kusur sarmalayıcımızda değil, devraldığımız
+ * Radix davranışında.
+ *
+ * SEÇİLEN SEMANTİK: WAI-ARIA APG "menu button" — menü TEK bir tab durağıdır;
+ * Tab menüyü kapatır ve odağı tetikleyiciye döndürür (Escape ile aynı çıkış
+ * yolu, dolayısıyla ailede tutarlı). Alt menüde basılan Tab da kökü kapatır.
+ *
+ * Kapatma için köke kontrollü bir açık/kapalı durumu takılır; `close` yalnız bu
+ * dosyanın içinde, public export açılmadan paylaşılır (#667).
+ */
+const DropdownMenuCloseContext = React.createContext<(() => void) | null>(null)
+
+type DropdownMenuRootProps = React.ComponentPropsWithoutRef<
+  typeof DropdownMenuPrimitive.Root
+>
+
+const DropdownMenu = ({
+  open,
+  defaultOpen,
+  onOpenChange,
+  children,
+  ...props
+}: DropdownMenuRootProps) => {
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(
+    defaultOpen ?? false
+  )
+  const isControlled = open !== undefined
+  const currentOpen = isControlled ? open : uncontrolledOpen
+
+  const handleOpenChange = React.useCallback(
+    (nextOpen: boolean) => {
+      if (!isControlled) setUncontrolledOpen(nextOpen)
+      onOpenChange?.(nextOpen)
+    },
+    [isControlled, onOpenChange]
+  )
+
+  const close = React.useCallback(() => handleOpenChange(false), [
+    handleOpenChange,
+  ])
+
+  return (
+    <DropdownMenuCloseContext.Provider value={close}>
+      <DropdownMenuPrimitive.Root
+        {...props}
+        open={currentOpen}
+        onOpenChange={handleOpenChange}
+      >
+        {children}
+      </DropdownMenuPrimitive.Root>
+    </DropdownMenuCloseContext.Provider>
+  )
+}
+DropdownMenu.displayName = "DropdownMenu"
+
+/**
+ * Menü içeriğinde Tab'ı WAI-ARIA menü sözleşmesine bağlayan ortak işleyici.
+ * Alt menülerden köpüren tuş olayları yok sayılır — onları kendi içerikleri ele alır.
+ */
+function useDropdownMenuTabDismiss(
+  onKeyDown?: React.KeyboardEventHandler<HTMLDivElement>
+) {
+  const close = React.useContext(DropdownMenuCloseContext)
+  return (event: React.KeyboardEvent<HTMLDivElement>) => {
+    onKeyDown?.(event)
+    if (event.defaultPrevented) return
+    if (event.key !== "Tab") return
+    if (event.altKey || event.ctrlKey || event.metaKey) return
+    if (!close) return
+    const target = event.target as HTMLElement | null
+    if (target?.closest("[data-radix-menu-content]") !== event.currentTarget) {
+      return
+    }
+    // Odağı Radix'in `onCloseAutoFocus`'u tetikleyiciye geri taşır.
+    event.preventDefault()
+    close()
+  }
+}
 
 const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger
 
@@ -43,27 +127,36 @@ DropdownMenuSubTrigger.displayName =
 const DropdownMenuSubContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.SubContent>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubContent>
->(({ className, ...props }, ref) => (
+>(({ className, onKeyDown, ...props }, ref) => {
+  // #645: alt menüde Tab da kökü kapatır (WAI-ARIA: tüm ata menüler kapanır).
+  const handleKeyDown = useDropdownMenuTabDismiss(onKeyDown)
+  return (
   <DropdownMenuPrimitive.SubContent
     ref={ref}
+    onKeyDown={handleKeyDown}
     className={cn(
       "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
       className
     )}
     {...props}
   />
-))
+  )
+})
 DropdownMenuSubContent.displayName =
   DropdownMenuPrimitive.SubContent.displayName
 
 const DropdownMenuContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
->(({ className, sideOffset = 4, ...props }, ref) => (
+>(({ className, sideOffset = 4, onKeyDown, ...props }, ref) => {
+  // #645: Tab menüyü kapatır, odak tetikleyiciye döner.
+  const handleKeyDown = useDropdownMenuTabDismiss(onKeyDown)
+  return (
   <DropdownMenuPrimitive.Portal>
     <DropdownMenuPrimitive.Content
       ref={ref}
       sideOffset={sideOffset}
+      onKeyDown={handleKeyDown}
       className={cn(
         "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
         className
@@ -71,7 +164,8 @@ const DropdownMenuContent = React.forwardRef<
       {...props}
     />
   </DropdownMenuPrimitive.Portal>
-))
+  )
+})
 DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName
 
 const DropdownMenuItem = React.forwardRef<

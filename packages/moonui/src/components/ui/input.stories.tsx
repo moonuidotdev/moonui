@@ -4,7 +4,11 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { Input } from './input';
 import { Label } from './label';
 import { Button } from './button';
-import { Search, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+/* `Search` ikonu takma adla alinir: asagida ayni adla bir story export ediliyor
+ * (`export const Search: Story`). Cakisma yalnizca tip hatasi degildi — satir 99'daki
+ * `<Search />` ikonu degil STORY NESNESINI cozuyordu, yani o story calistirilinca
+ * patlardi. Story adi Storybook arayuzunde gorundugu icin ikon yeniden adlandirildi. */
+import { Search as SearchIcon, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 
 const meta: Meta<typeof Input> = {
@@ -96,7 +100,7 @@ export const Disabled: Story = {
 export const WithIcon: Story = {
   render: () => (
     <div className="relative">
-      <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+      <SearchIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
       <Input
         type="search"
         placeholder="Search..."

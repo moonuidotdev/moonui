@@ -5,16 +5,36 @@ import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area"
 
 import { cn } from "../../lib/utils"
 
+export interface ScrollAreaProps
+  extends React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root> {
+  /**
+   * #308-1: Kaydırma alanının klavyeyle odaklanabilir olup olmayacağı. Varsayılan `true`
+   * — odaklanabilir içeriği olmayan bir kaydırma alanı aksi hâlde klavyeyle erişilemez
+   * (WCAG 2.1.1). Fazladan sekme durağı istenmeyen durumlarda `false`.
+   */
+  focusable?: boolean
+}
+
 const ScrollArea = React.forwardRef<
   React.ElementRef<typeof ScrollAreaPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root>
->(({ className, children, ...props }, ref) => (
+  ScrollAreaProps
+>(({ className, children, focusable = true, ...props }, ref) => (
   <ScrollAreaPrimitive.Root
     ref={ref}
     className={cn("relative overflow-hidden", className)}
     {...props}
   >
-    <ScrollAreaPrimitive.Viewport className="h-full w-full rounded-[inherit]">
+    {/*
+      #308-1: Viewport'a `tabIndex` VERİLMİYORDU ve bu davranış Radix'ten kalıtsal DEĞİL
+      (`@radix-ui/react-scroll-area` kaynağında tabIndex geçmiyor). Sonuç: içinde
+      odaklanabilir eleman bulunmayan bir ScrollArea klavyeyle HİÇ kaydırılamıyordu
+      (WCAG 2.1.1). Kaydırılabilir bölgenin odaklanabilir olması kanonik çözümdür;
+      ek sekme durağı istemeyen tüketici `focusable={false}` diyebilir.
+    */}
+    <ScrollAreaPrimitive.Viewport
+      tabIndex={focusable ? 0 : undefined}
+      className="h-full w-full rounded-[inherit]"
+    >
       {children}
     </ScrollAreaPrimitive.Viewport>
     <ScrollBar />

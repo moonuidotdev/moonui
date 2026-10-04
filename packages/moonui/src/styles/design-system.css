@@ -263,43 +263,33 @@
 /* ===== Utility Classes ===== */
 
 @layer utilities {
-  /* Shadow Utilities */
+  /* Shadow Utilities — YALNIZCA Tailwind'de karsiligi OLMAYAN ozel golgeler.
+     shadow-sm/md/lg/xl/2xl KALDIRILDI (#35): Tailwind'in ayni adli utility'lerini eziyorlardi
+     (design-system olceyi bir kademe kaydiriyordu). Artik Tailwind kanonik. */
   .shadow-xs { box-shadow: var(--shadow-xs); }
-  .shadow-sm { box-shadow: var(--shadow-sm); }
-  .shadow-md { box-shadow: var(--shadow-md); }
-  .shadow-lg { box-shadow: var(--shadow-lg); }
-  .shadow-xl { box-shadow: var(--shadow-xl); }
-  .shadow-2xl { box-shadow: var(--shadow-2xl); }
-  
+
   .shadow-primary { box-shadow: var(--shadow-primary); }
   .shadow-success { box-shadow: var(--shadow-success); }
   .shadow-error { box-shadow: var(--shadow-error); }
   .shadow-warning { box-shadow: var(--shadow-warning); }
-  
+
   .shadow-inner-xs { box-shadow: var(--shadow-inner-xs); }
   .shadow-inner-sm { box-shadow: var(--shadow-inner-sm); }
   .shadow-inner-md { box-shadow: var(--shadow-inner-md); }
-  
-  /* Animation Utilities */
-  .animate-none { animation: none; }
-  .animate-spin { animation: spin 1s linear infinite; }
-  .animate-ping { animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite; }
-  .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-  .animate-bounce { animation: bounce 1s infinite; }
+
+  /* Animation Utilities — YALNIZCA ozel animasyonlar.
+     animate-none/spin/ping/pulse/bounce KALDIRILDI (#35): Tailwind'in ayni adli
+     utility'leriyle cakisiyordu (Tailwind'inkiyle ozdes davranis, Tailwind kanonik). */
   .animate-fade-in { animation: fadeIn var(--duration-normal) var(--ease-out); }
   .animate-fade-out { animation: fadeOut var(--duration-normal) var(--ease-out); }
   .animate-slide-in { animation: slideIn var(--duration-normal) var(--ease-out); }
   .animate-scale-in { animation: scaleIn var(--duration-normal) var(--ease-out); }
-  
-  /* Transition Utilities */
-  .transition-none { transition: none; }
-  .transition-all { transition-property: all; }
-  .transition-colors { transition-property: color, background-color, border-color, text-decoration-color, fill, stroke; }
-  .transition-opacity { transition-property: opacity; }
-  .transition-shadow { transition-property: box-shadow; }
-  .transition-transform { transition-property: transform; }
-  
-  /* Duration Utilities */
+
+  /* Transition Utilities — transition-none/all/colors/opacity/shadow/transform KALDIRILDI
+     (#35): Tailwind'in ayni adli utility'leriyle cakisiyordu (ozdes davranis, Tailwind kanonik). */
+
+  /* Duration Utilities — Tailwind sayisal duration (duration-75 vb.) kullanir;
+     bu adlandirilmis olanlar cakismaz, kalir. */
   .duration-instant { transition-duration: var(--duration-instant); }
   .duration-fast { transition-duration: var(--duration-fast); }
   .duration-normal { transition-duration: var(--duration-normal); }
@@ -307,42 +297,15 @@
   .duration-slower { transition-duration: var(--duration-slower); }
   .duration-slowest { transition-duration: var(--duration-slowest); }
   
-  /* Easing Utilities */
-  .ease-linear { transition-timing-function: var(--ease-linear); }
-  .ease-in { transition-timing-function: var(--ease-in); }
-  .ease-out { transition-timing-function: var(--ease-out); }
-  .ease-in-out { transition-timing-function: var(--ease-in-out); }
+  /* Easing Utilities — ease-linear/in/out/in-out KALDIRILDI (#35): Tailwind ile cakisiyordu.
+     ease-bounce ozel (Tailwind'de yok), kaldi. */
   .ease-bounce { transition-timing-function: var(--ease-bounce); }
 }
 
-/* ===== Keyframes ===== */
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-@keyframes ping {
-  75%, 100% {
-    transform: scale(2);
-    opacity: 0;
-  }
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: .5; }
-}
-
-@keyframes bounce {
-  0%, 100% {
-    transform: translateY(-25%);
-    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
-  }
-  50% {
-    transform: translateY(0);
-    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
-  }
-}
+/* ===== Keyframes =====
+   spin/ping/pulse/bounce KALDIRILDI (#35): ilgili animate-* utility'leri Tailwind ile
+   cakistigi icin kaldirilinca bu keyframe'ler oludu kaldi ve Tailwind'inkileri kopyaliyordu.
+   Asagidakiler (fadeIn/fadeOut/slideIn/scaleIn) ozel animate-* siniflarinca kullaniliyor. */
 
 @keyframes fadeIn {
   from { opacity: 0; }

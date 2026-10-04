@@ -24,23 +24,34 @@ const radioGroupItemVariants = cva(
       },
       size: {
         sm: "h-3.5 w-3.5",
+        md: "h-4 w-4",
+        lg: "h-5 w-5",
+        xl: "h-6 w-6",
+        /** @deprecated `md` kullanın — #319 kanonik skala; aynı çıktıyı üretir. */
         default: "h-4 w-4",
-        md: "h-5 w-5",
-        lg: "h-6 w-6",
       },
     },
     defaultVariants: {
       variant: "default",
-      size: "default",
+      size: "md",
     },
   }
 );
 
-export interface RadioGroupProps extends React.HTMLAttributes<HTMLDivElement> {
+// NOT: `React.HTMLAttributes` kendi `defaultValue`'sunu
+// (`string | number | readonly string[]`) taşır; radio grubu için tek bir `string`
+// anlamlı olduğundan Omit ile daraltılır.
+export interface RadioGroupProps
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, "defaultValue"> {
   /**
-   * Radio group value
+   * Radio group value (controlled)
    */
   value?: string;
+  /**
+   * Uncontrolled kullanımda başlangıç değeri. `value` verilmediğinde grup
+   * seçimi kendi iç state'inde tutar.
+   */
+  defaultValue?: string;
   /**
    * Function to call when radio group value changes
    */
@@ -63,9 +74,34 @@ const RadioGroupContext = React.createContext<{
 }>({});
 
 const RadioGroup = React.forwardRef<HTMLDivElement, RadioGroupProps>(
-  ({ className, value, onValueChange, disabled, name, ...props }, ref) => {
+  ({ className, value, defaultValue, onValueChange, disabled, name, ...props }, ref) => {
+    // Controlled/uncontrolled ikili mod: `value` verilmişse tüketici yönetir,
+    // verilmemişse grup seçimi kendi iç state'inde tutar.
+    const [internalValue, setInternalValue] = React.useState<string | undefined>(
+      defaultValue
+    );
+    const isControlled = value !== undefined;
+    const currentValue = isControlled ? value : internalValue;
+
+    const handleValueChange = React.useCallback(
+      (next: string) => {
+        if (!isControlled) {
+          setInternalValue(next);
+        }
+        onValueChange?.(next);
+      },
+      [isControlled, onValueChange]
+    );
+
     return (
-      <RadioGroupContext.Provider value={{ value, onValueChange, disabled, name }}>
+      <RadioGroupContext.Provider
+        value={{
+          value: currentValue,
+          onValueChange: handleValueChange,
+          disabled,
+          name,
+        }}
+      >
         <div
           ref={ref}
           role="radiogroup"
@@ -131,7 +167,7 @@ const RadioGroupItem = React.forwardRef<
         disabled={disabled || radioGroup.disabled}
         name={radioGroup.name}
         onChange={handleChange}
-        className="sr-only"
+        className="peer sr-only"
         {...props}
       />
       <label
@@ -139,7 +175,12 @@ const RadioGroupItem = React.forwardRef<
         className={cn(
           radioGroupItemVariants({ variant, size }),
           "rounded-full",
-          "focus-visible:ring-primary/50",
+          // Gerçekte odaklanan eleman görsel olarak gizli `sr-only` input'tur.
+          // Görünür label onun KARDEŞİ olduğu için label'da `:focus-visible` hiç
+          // tetiklenmiyor, dolayısıyla klavye kullanıcısı hiçbir focus izi
+          // görmüyordu. Tailwind `peer` deseniyle (input `peer` sınıfını taşır ve
+          // DOM'da label'dan önce gelir) focus izi görünür elemana taşınır.
+          "peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-primary/50",
           "relative inline-flex shrink-0 cursor-pointer items-center justify-center overflow-hidden",
           disabled && "cursor-not-allowed opacity-50",
           className
@@ -158,7 +199,7 @@ const RadioGroupItem = React.forwardRef<
 RadioGroupItem.displayName = "RadioGroupItem";
 
 // Radio Label Component
-interface RadioLabelProps extends React.HTMLAttributes<HTMLLabelElement> {
+export interface RadioLabelProps extends React.HTMLAttributes<HTMLLabelElement> {
   /**
    * HTML id for radio button
    */
@@ -194,7 +235,7 @@ const RadioLabel = React.forwardRef<HTMLLabelElement, RadioLabelProps>(
 RadioLabel.displayName = "RadioLabel";
 
 // Radio Item and Label combination
-interface RadioItemWithLabelProps extends RadioGroupItemProps {
+export interface RadioItemWithLabelProps extends RadioGroupItemProps {
   /**
    * Label content
    */

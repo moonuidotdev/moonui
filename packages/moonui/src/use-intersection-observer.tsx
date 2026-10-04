@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-interface UseIntersectionObserverOptions extends IntersectionObserverInit {
+export interface UseIntersectionObserverOptions extends IntersectionObserverInit {
   freezeOnceVisible?: boolean;
   initialIsIntersecting?: boolean;
   onChange?: (isIntersecting: boolean, entry: IntersectionObserverEntry) => void;
@@ -27,6 +27,15 @@ export function useIntersectionObserver({
 
     const observer = new IntersectionObserver(
       ([entry]) => {
+        // freezeOnceVisible: bir kez görünür olduktan sonra state DONMALI.
+        // frozen guard'ı yalnızca yukarıdaki effect girişinde vardı; effect'in
+        // deps'i değişmediği için yeniden koşmuyor, dolayısıyla guard hiç
+        // devreye girmiyordu. Canlı observer bir sonraki entry'de
+        // setIsIntersecting(false) çağırıp donmayı bozuyordu.
+        if (frozen.current) {
+          return;
+        }
+
         const isElementIntersecting = entry.isIntersecting;
         setIsIntersecting(isElementIntersecting);
         onChange?.(isElementIntersecting, entry);

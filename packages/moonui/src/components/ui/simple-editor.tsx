@@ -59,6 +59,10 @@ const ToolbarButton = ({ icon, tooltip, active, onClick, disabled }: ToolbarButt
         pressed={active}
         onPressedChange={() => onClick()}
         disabled={disabled}
+        // Butonun tek içeriği bir ikon; erişilebilir ad olmadan ekran okuyucu
+        // yalnızca "button" der. `tooltip` zaten insan-okur etiketi taşıyor.
+        // (Tooltip yalnızca fare/odak ile görünür, erişilebilir ad SAĞLAMAZ.)
+        aria-label={tooltip}
         className="h-8 w-8 p-0"
       >
         {icon}
@@ -82,7 +86,10 @@ const ColorPicker = ({ onColorSelect }: { onColorSelect: (color: string) => void
       {colors.map(color => (
         <button
           key={color}
-          className="w-6 h-6 rounded border-2 border-gray-200 hover:border-gray-400"
+          type="button"
+          // Swatch'ın tek içeriği arka plan rengi — erişilebilir ad şart.
+          aria-label={`Select color ${color}`}
+          className="w-6 h-6 rounded border-2 border-border hover:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           style={{ backgroundColor: color }}
           onClick={() => onColorSelect(color)}
         />
@@ -276,24 +283,9 @@ export const SimpleEditor = React.forwardRef<HTMLDivElement, SimpleEditorProps>(
       }
     }, [executeCommand, updateContent])
 
-    // Convert HTML to plain text for preview
-    const getPlainText = (html: string) => {
-      if (typeof window === 'undefined') {
-        // Server-side: simple regex-based HTML stripping
-        return html
-          .replace(/<[^>]*>/g, '') // Remove HTML tags
-          .replace(/&nbsp;/g, ' ') // Replace &nbsp; with space
-          .replace(/&amp;/g, '&')  // Replace &amp; with &
-          .replace(/&lt;/g, '<')   // Replace &lt; with <
-          .replace(/&gt;/g, '>')   // Replace &gt; with >
-          .replace(/&quot;/g, '"') // Replace &quot; with "
-          .replace(/&#39;/g, "'")  // Replace &#39; with '
-      }
-      // Client-side: use DOM for accurate conversion
-      const div = document.createElement('div')
-      div.innerHTML = html
-      return div.textContent || div.innerText || ''
-    }
+    /* #664 (S9): burada duran ikinci bir `getPlainText` kopyası SİLİNDİ — component
+       gövdesinde tanımlanıp hiçbir yerden çağrılmıyordu (0 çağrı yeri). Karakter
+       sayacı kendi kopyasını `CharacterCount` içinde tutuyor; canlı olan odur. */
 
     React.useEffect(() => {
       if (editorRef.current && content && content !== editorRef.current.innerHTML) {
@@ -589,10 +581,18 @@ export const SimpleEditor = React.forwardRef<HTMLDivElement, SimpleEditorProps>(
               ref={editorRef}
               contentEditable={!disabled}
               suppressContentEditableWarning
+              // Düz `div[contentEditable]` yardımcı teknolojiye bir form alanı
+              // olarak görünmüyordu: rolü yok, çok satırlı olduğu bilinmiyor ve
+              // erişilebilir adı yok.
+              role="textbox"
+              aria-multiline="true"
+              aria-label={placeholder}
+              aria-disabled={disabled || undefined}
               className={cn(
                 "p-4 outline-none prose prose-sm dark:prose-invert max-w-none overflow-y-auto",
-                "bg-slate-50 dark:bg-zinc-900/95",
-                "text-gray-900 dark:text-gray-100",
+                // Token'a bağlandı (önce `bg-slate-50 dark:bg-zinc-900/95` ve
+                // `text-gray-900 dark:text-gray-100` hardcode'luydu).
+                "bg-background text-foreground",
                 "focus:ring-0",
                 "[&_h1]:text-3xl [&_h1]:font-bold [&_h1]:mb-4",
                 "[&_h2]:text-2xl [&_h2]:font-bold [&_h2]:mb-3",

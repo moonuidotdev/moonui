@@ -5,13 +5,16 @@ import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"
 import { cn } from "../../lib/utils"
 import { ButtonProps, buttonVariants } from "./button"
 
-const Pagination = ({ className, ...props }: React.ComponentProps<"nav">) => (
-  <nav
-    role="navigation"
-    aria-label="pagination"
-    className={cn("moonui-theme", "mx-auto flex w-full justify-center", className)}
-    {...props}
-  />
+const Pagination = React.forwardRef<HTMLElement, React.ComponentProps<"nav">>(
+  ({ className, ...props }, ref) => (
+    <nav
+      ref={ref}
+      role="navigation"
+      aria-label="pagination"
+      className={cn("moonui-theme", "mx-auto flex w-full justify-center", className)}
+      {...props}
+    />
+  )
 )
 Pagination.displayName = "Pagination"
 
@@ -40,71 +43,85 @@ type PaginationLinkProps = {
 } & Partial<Pick<ButtonProps, "size">> &
   React.ComponentProps<"a">
 
-const PaginationLink = ({
-  className,
-  isActive,
-  size = "icon",
-  ...props
-}: PaginationLinkProps) => (
-  <a
-    aria-current={isActive ? "page" : undefined}
-    className={cn(
-      buttonVariants({
-        variant: isActive ? "outline" : "ghost",
-        size,
-      }),
-      className
-    )}
-    {...props}
-  />
+const PaginationLink = React.forwardRef<HTMLAnchorElement, PaginationLinkProps>(
+  ({ className, isActive, size = "icon", ...props }, ref) => (
+    <a
+      ref={ref}
+      aria-current={isActive ? "page" : undefined}
+      className={cn(
+        buttonVariants({
+          variant: isActive ? "outline" : "ghost",
+          size,
+        }),
+        className
+      )}
+      {...props}
+    />
+  )
 )
 PaginationLink.displayName = "PaginationLink"
 
-const PaginationPrevious = ({
-  className,
-  ...props
-}: React.ComponentProps<typeof PaginationLink>) => (
+/**
+ * #315: "Previous"/"Next" etiketleri KOŞULSUZ render ediliyordu ve component'te hiçbir
+ * responsive affordance yoktu. 375px'te ölçüm: nav clientWidth=229 / scrollWidth=317
+ * (88px iç taşma) → ata zincirindeki `overflow-hidden` etiketi kırpıyor, kullanıcı
+ * "Previous" yerine "vious" görüyordu. Etiket artık `sm` altında gizleniyor; erişilebilir
+ * ad `aria-label` ile korunduğu için ekran-okuyucu deneyimi DEĞİŞMİYOR.
+ */
+const paginationLabelClass = "hidden sm:inline"
+
+const PaginationPrevious = React.forwardRef<
+  HTMLAnchorElement,
+  React.ComponentProps<typeof PaginationLink>
+>(({ className, ...props }, ref) => (
   <PaginationLink
+    ref={ref}
     aria-label="Go to previous page"
     size="md"
     className={cn("moonui-theme", "gap-1 pl-2.5", className)}
     {...props}
   >
     <ChevronLeft className="h-4 w-4" />
-    <span>Previous</span>
+    <span className={paginationLabelClass}>Previous</span>
   </PaginationLink>
-)
+))
 PaginationPrevious.displayName = "PaginationPrevious"
 
-const PaginationNext = ({
-  className,
-  ...props
-}: React.ComponentProps<typeof PaginationLink>) => (
+const PaginationNext = React.forwardRef<
+  HTMLAnchorElement,
+  React.ComponentProps<typeof PaginationLink>
+>(({ className, ...props }, ref) => (
   <PaginationLink
+    ref={ref}
     aria-label="Go to next page"
     size="md"
     className={cn("moonui-theme", "gap-1 pr-2.5", className)}
     {...props}
   >
-    <span>Next</span>
+    <span className={paginationLabelClass}>Next</span>
     <ChevronRight className="h-4 w-4" />
   </PaginationLink>
-)
+))
 PaginationNext.displayName = "PaginationNext"
 
-const PaginationEllipsis = ({
-  className,
-  ...props
-}: React.ComponentProps<"span">) => (
+const PaginationEllipsis = React.forwardRef<
+  HTMLSpanElement,
+  React.ComponentProps<"span">
+>(({ className, ...props }, ref) => (
+  // #315: `aria-hidden` ESKİDEN BU ELEMANDAYDI → içindeki `sr-only` "More pages" metni
+  // erişilebilirlik ağacından düşüyor, hiç duyurulmuyordu. Gizleme artık yalnız dekoratif
+  // ikonda. (breadcrumb.tsx'te birebir aynı çakışma vardı — aynı PR'da düzeltildi.)
   <span
-    aria-hidden
+    ref={ref}
     className={cn("moonui-theme", "flex h-9 w-9 items-center justify-center", className)}
     {...props}
   >
-    <MoreHorizontal className="h-4 w-4" />
+    <span aria-hidden="true" className="flex items-center">
+      <MoreHorizontal className="h-4 w-4" />
+    </span>
     <span className="sr-only">More pages</span>
   </span>
-)
+))
 PaginationEllipsis.displayName = "PaginationEllipsis"
 
 export {
@@ -116,3 +133,6 @@ export {
   PaginationNext,
   PaginationPrevious,
 }
+
+// #315: Props tiplerinin hiçbiri export edilmiyordu.
+export type { PaginationLinkProps }

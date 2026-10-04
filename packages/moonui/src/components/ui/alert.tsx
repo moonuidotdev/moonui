@@ -19,17 +19,30 @@ const alertVariants = cva(
         variants: {
             variant: {
                 default: "bg-background text-foreground border-border",
-                primary: "bg-primary/10 text-primary border-primary/30",
-                success: "bg-success/10 text-success border-success/30",
-                warning: "bg-warning/10 text-warning border-warning/30",
-                error: "bg-destructive/10 text-destructive border-destructive/30",
-                info: "bg-blue-500/10 text-blue-500 border-blue-500/30",
+                // KONTRAST (açık tema): metin rengi ham `text-X` DEĞİL,
+                // `text-X-subtle-foreground` olmalı. `bg-X/10 + text-X` deseni
+                // açık temada ölçülen 4.11–4.45 veriyor ve WCAG AA eşiğini
+                // (4.5) geçmiyor. `-subtle-foreground` token'ları aynı yüzey
+                // için 8.20–9.52 sağlıyor (tokens.css'te oranlar yazılı) ve
+                // `bg-X-subtle`, `bg-X/10` ile AYNI görünümü verir
+                // (tokens.css:217) → görsel kimlik değişmez, yalnız metin
+                // koyulaşır. `warning` bu düzeltmeyi zaten taşıyordu.
+                primary: "bg-primary-subtle text-primary-subtle-foreground border-primary/30",
+                success: "bg-success-subtle text-success-subtle-foreground border-success/30",
+                warning: "bg-warning-subtle text-warning-subtle-foreground border-warning/30",
+                error: "bg-destructive-subtle text-destructive-subtle-foreground border-destructive/30",
+                // `--info` token'ı (tokens.css) blue-500 ile birebir aynı değeri
+                // taşır → görsel değişiklik yok, ancak varyant artık temaya ve
+                // karanlık moda duyarlı. Kardeş varyantlarla simetrik.
+                info: "bg-info-subtle text-info-subtle-foreground border-info/30",
             },
             size: {
                 sm: "py-2 text-xs",
-                default: "py-3 text-sm",
+                md: "py-3 text-sm",
                 lg: "py-4 text-base",
-            },
+                /** @deprecated `md` kullanın — #319 kanonik skala; aynı çıktıyı üretir. */
+                default: "py-3 text-sm",
+              },
             radius: {
                 none: "rounded-none",
                 sm: "rounded-sm",
@@ -43,7 +56,7 @@ const alertVariants = cva(
         },
         defaultVariants: {
             variant: "default",
-            size: "default",
+            size: "md",
             radius: "default",
             withClose: false,
         },
@@ -114,7 +127,7 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
                     <button
                         onClick={onClose}
                         className="absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-full opacity-70 transition-opacity hover:opacity-100"
-                        aria-label="Kapat"
+                        aria-label="Close alert"
                     >
                         <X className="h-4 w-4" />
                     </button>
@@ -125,20 +138,40 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
 );
 Alert.displayName = "Alert";
 
-const AlertTitle = React.forwardRef<
-    HTMLParagraphElement,
-    React.HTMLAttributes<HTMLHeadingElement>
->(({ className, ...props }, ref) => (
-    <h5
-        ref={ref}
-        className={cn(
-            "moonui-theme",
-            "font-semibold leading-tight tracking-tight mb-1",
-            className
-        )}
-        {...props}
-    />
-));
+export interface AlertTitleProps
+    extends React.HTMLAttributes<HTMLHeadingElement> {
+    /**
+     * Render edilecek element. Varsayılan `"div"`.
+     *
+     * #345: Eskiden sabit `<h5>` idi. Bir component'in belge başlık SEVİYESİNİ
+     * dayatması yanlıştır — doğru seviye, component'in sayfada nereye konduğuna
+     * bağlıdır ve bunu yalnız tüketici bilir. Sabit `h5`, docs alert sayfasında
+     * H1 → H2 → H5 sıçraması üretiyordu (10 `heading-order` ihlali) ve tüketici
+     * bunu düzeltemiyordu.
+     *
+     * Varsayılanın `div` olması ayrıca semantik olarak daha doğru: bir uyarının
+     * başlığı belge ANA HATTINA ait değildir; `Alert` zaten `role="alert"` ile
+     * duyurulur ve başlık o duyurunun parçası olarak okunur.
+     *
+     * Başlık semantiği gerçekten isteniyorsa sayfaya uyan seviye verilir:
+     * `<AlertTitle as="h3">`. Görsel çıktı her iki durumda da AYNIDIR.
+     */
+    as?: React.ElementType;
+}
+
+const AlertTitle = React.forwardRef<HTMLHeadingElement, AlertTitleProps>(
+    ({ className, as: Comp = "div", ...props }, ref) => (
+        <Comp
+            ref={ref}
+            className={cn(
+                "moonui-theme",
+                "font-semibold leading-tight tracking-tight mb-1",
+                className
+            )}
+            {...props}
+        />
+    )
+);
 AlertTitle.displayName = "AlertTitle";
 
 const AlertDescription = React.forwardRef<
@@ -149,7 +182,12 @@ const AlertDescription = React.forwardRef<
         ref={ref}
         className={cn(
             "moonui-theme",
-            "text-sm leading-5 text-muted-foreground",
+            // KONTRAST: sabit `text-muted-foreground` (#606f85) renkli varyant
+            // yüzeylerinde 4.31–4.48 veriyordu — başlık düzelse bile açıklama
+            // satırı eşiğin altında kalıyordu. `text-current` varyantın
+            // `-subtle-foreground` rengini miras alır; hiyerarşi renk yerine
+            // ağırlıkla (başlık `font-semibold`) ve hafif opaklıkla korunur.
+            "text-sm leading-5 text-current opacity-90",
             className
         )}
         {...props}

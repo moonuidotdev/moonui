@@ -127,7 +127,10 @@ export const hoverAnimations = {
     transition: springAnimations.smooth,
   },
   glow: {
-    boxShadow: "0 0 20px rgba(var(--primary), 0.3)",
+    // #738: `--primary` HSL üçlüsüdür (tokens.css:129 `217.2 91.2% 51%`).
+    // `rgba(var(--primary), 0.3)` hem yanlış renk uzayı hem geçersiz sözdizimiydi
+    // → bildirim düşüyor, hover parıltısı hiç çizilmiyordu.
+    boxShadow: "0 0 20px hsl(var(--primary) / 0.3)",
     transition: springAnimations.smooth,
   },
   rotate: {
@@ -155,11 +158,18 @@ export const tapAnimations = {
  */
 export const focusAnimations = {
   ring: {
-    boxShadow: "0 0 0 2px var(--background), 0 0 0 4px var(--primary)",
+    // #738 (envanter DIŞI kardeş kusur, ölçümle bulundu): `--background` ve
+    // `--primary` HSL ÜÇLÜSÜDÜR (`217.2 91.2% 51%`), hazır renk değil. Çıplak
+    // `var(--primary)` renk konumuna konunca bildirim geçersiz olur ve odak
+    // halkası HİÇ çizilmezdi (gerçek Chromium: `box-shadow: none`). `hsl()` ile
+    // sarmak gerekiyor. #711 kapısı bunu GÖREMİYOR: kapı `fn(var(--token))`
+    // kalıbını tarıyor, çıplak `var(--token)`ı değil.
+    boxShadow: "0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--primary))",
     transition: springAnimations.smooth,
   },
   glow: {
-    boxShadow: "0 0 0 3px rgba(var(--primary), 0.3)",
+    // #738: aynı kusur — odak halkası hiç çizilmiyordu (a11y açısından da kritik).
+    boxShadow: "0 0 0 3px hsl(var(--primary) / 0.3)",
     transition: springAnimations.smooth,
   },
 };

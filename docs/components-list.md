@@ -1,6 +1,6 @@
 # Available Components
 
-MoonUI provides 37+ free components for building modern React applications.
+MoonUI provides 45 free components for building modern React applications.
 
 ## Free Components
 
@@ -46,6 +46,6 @@ MoonUI provides 37+ free components for building modern React applications.
 
 ## Pro Components
 
-> 💎 **Upgrade to Pro** to access 200+ premium components with advanced features.
+> 💎 **Upgrade to Pro** to access 120+ Pro-only components with advanced features.
 
-[View Pro Components →](https://moonui.design/components)
+[View Pro Components →](https://moonui.dev/components)

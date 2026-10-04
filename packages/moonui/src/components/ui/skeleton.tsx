@@ -24,9 +24,11 @@ const skeletonVariants = cva(
         accent: "bg-accent",
       },
       size: {
-        default: "",
+        md: "",
         sm: "scale-90",
         lg: "scale-110",
+        /** @deprecated `md` kullanın — #319 kanonik skala; aynı çıktıyı üretir. */
+        default: "",
       },
       shape: {
         rect: "rounded-md",
@@ -41,7 +43,7 @@ const skeletonVariants = cva(
     },
     defaultVariants: {
       variant: "default",
-      size: "default",
+      size: "md",
       shape: "rect",
       animation: "pulse",
     },
@@ -144,10 +146,25 @@ export const Skeleton = React.forwardRef<HTMLDivElement, SkeletonProps>(
     }
 
     const SkeletonElement = useMotion ? motion.div : "div";
-    
+
     return (
       <SkeletonElement
         ref={ref}
+        /**
+         * #320: Skeleton hiçbir a11y işareti taşımıyordu — ne `aria-hidden`, ne `role`,
+         * ne `aria-busy`. Radix kullanmadığı için kalıtsal semantik de yok.
+         *
+         * Konvansiyon olarak `aria-hidden` seçildi (`role="status"` DEĞİL): tek bir yükleme
+         * durumu tipik olarak ONLARCA skeleton render eder (`SkeletonText` tek başına N satır
+         * basar) — her biri canlı bölge olsaydı ekran okuyucu aynı olayı N kez duyururdu.
+         * "Yükleniyor" duyurusunun sahibi `spinner.tsx:79-105` (`role="status"` +
+         * `aria-live="polite"` + `sr-only` etiket); skeleton onun görsel yer tutucusudur.
+         * Tüketici kapsayıcıya `aria-busy` koyarak durumu bildirir.
+         *
+         * Yalnız YER TUTUCU dalında: `isLoaded && children` dalı gerçek içerik döndürür ve
+         * yukarıda kasıtlı olarak işaretlenmemiştir.
+         */
+        aria-hidden="true"
         className={cn(
           "moonui-theme",
           skeletonVariants({ variant, size, shape, animation }),

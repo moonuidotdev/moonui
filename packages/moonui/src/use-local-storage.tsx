@@ -1,5 +1,20 @@
 import { useState, useEffect } from 'react'
 
+/**
+ * Aynı sekmedeki diğer hook instance'larını haberdar eden özel olay.
+ *
+ * Native `storage` olayı YALNIZCA diğer sekme/pencerelerde tetiklenir — değeri
+ * yazan dokümanda hiç tetiklenmez. Bu yüzden aynı sayfada `useLocalStorage("k")`
+ * kullanan iki component birbirinden habersiz kalıyor, biri güncellenince
+ * diğeri bayat değeri göstermeye devam ediyordu.
+ */
+const LOCAL_SYNC_EVENT = 'moonui:local-storage'
+
+interface LocalSyncDetail {
+  key: string
+  value: unknown
+}
+
 // Local storage hook with error handling and SSR support
 export function useLocalStorage<T>(
   key: string,
@@ -40,6 +55,13 @@ export function useLocalStorage<T>(
         } else {
           window.localStorage.setItem(key, JSON.stringify(valueToStore))
         }
+
+        // Aynı dokümandaki diğer instance'ları bilgilendir (bkz. LOCAL_SYNC_EVENT)
+        window.dispatchEvent(
+          new CustomEvent<LocalSyncDetail>(LOCAL_SYNC_EVENT, {
+            detail: { key, value: valueToStore },
+          })
+        )
       }
     } catch (error) {
       // A more advanced implementation would handle the error case
@@ -63,8 +85,20 @@ export function useLocalStorage<T>(
       }
     }
 
+    // Aynı sekmedeki kardeş instance'lar
+    const handleLocalSync = (e: Event) => {
+      const detail = (e as CustomEvent<LocalSyncDetail>).detail
+      if (detail && detail.key === key) {
+        setStoredValue(detail.value as T)
+      }
+    }
+
     window.addEventListener('storage', handleStorageChange)
-    return () => window.removeEventListener('storage', handleStorageChange)
+    window.addEventListener(LOCAL_SYNC_EVENT, handleLocalSync)
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener(LOCAL_SYNC_EVENT, handleLocalSync)
+    }
   }, [key])
 
   return [storedValue, setValue]

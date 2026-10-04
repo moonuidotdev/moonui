@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
 import { ChevronRight, MoreHorizontal } from "lucide-react";
 import { cva, type VariantProps } from "class-variance-authority";
 
@@ -16,14 +17,16 @@ const breadcrumbVariants = cva(
         ghost: "text-foreground/60 transition-colors",
       },
       size: {
-        default: "text-sm",
+        md: "text-sm",
         sm: "text-xs",
         lg: "text-base",
+        /** @deprecated `md` kullanın — #319 kanonik skala; aynı çıktıyı üretir. */
+        default: "text-sm",
       },
     },
     defaultVariants: {
       variant: "default",
-      size: "default",
+      size: "md",
     },
   }
 );
@@ -31,9 +34,23 @@ const breadcrumbVariants = cva(
 interface BreadcrumbProps
   extends React.HTMLAttributes<HTMLElement>,
     VariantProps<typeof breadcrumbVariants> {
+  /**
+   * Alt `BreadcrumbSeparator`'ların varsayılan ayracı. #309: bu prop tipte tanımlıydı ama
+   * component gövdesinde HİÇ okunmuyordu → `{...props}` ile `<nav>`'a sızıyor, React
+   * bilinmeyen-öznitelik uyarısı basıyordu. Artık context ile alt ayraçlara iniyor;
+   * ayracın kendi `children`/`icon` prop'u bunu ezer.
+   */
   separator?: React.ReactNode;
+  /**
+   * @deprecated Hiçbir zaman uygulanmadı — kaynakta okunmuyordu ve `<nav>`'a sızıyordu
+   * (#309'da sızıntı kesildi, davranış eklenmedi). Ev ikonu için ilk `BreadcrumbItem`
+   * içine ikonu doğrudan koyun; işaretleme kararı tüketiciye ait olmalı.
+   */
   showHomeIcon?: boolean;
 }
+
+/** #309: kök `separator`'ı alt `BreadcrumbSeparator`'lara taşıyan tek kaynak. */
+const BreadcrumbSeparatorContext = React.createContext<React.ReactNode>(undefined);
 
 interface BreadcrumbListProps extends React.HTMLAttributes<HTMLOListElement> {
   collapsed?: boolean;
@@ -57,13 +74,17 @@ interface BreadcrumbEllipsisProps extends React.HTMLAttributes<HTMLSpanElement> 
 }
 
 const Breadcrumb = React.forwardRef<HTMLElement, BreadcrumbProps>(
-  ({ className, variant, size, ...props }, ref) => (
-    <nav
-      ref={ref}
-      className={cn("moonui-theme", breadcrumbVariants({ variant, size }), className)}
-      aria-label="breadcrumb"
-      {...props}
-    />
+  // #309: `separator` ve `showHomeIcon` ESKİDEN destructure EDİLMİYORDU → `{...props}` ile
+  // `<nav>`'a öznitelik olarak basılıyor, React uyarı veriyordu. İkisi de artık ayrılıyor.
+  ({ className, variant, size, separator, showHomeIcon: _showHomeIcon, ...props }, ref) => (
+    <BreadcrumbSeparatorContext.Provider value={separator}>
+      <nav
+        ref={ref}
+        className={cn("moonui-theme", breadcrumbVariants({ variant, size }), className)}
+        aria-label="breadcrumb"
+        {...props}
+      />
+    </BreadcrumbSeparatorContext.Provider>
   )
 );
 Breadcrumb.displayName = "Breadcrumb";
@@ -109,27 +130,34 @@ const BreadcrumbList = React.forwardRef<HTMLOListElement, BreadcrumbListProps>(
 BreadcrumbList.displayName = "BreadcrumbList";
 
 const BreadcrumbItem = React.forwardRef<HTMLLIElement, BreadcrumbItemProps>(
-  ({ className, isCurrent, href, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? React.Fragment : href ? "a" : "span";
-    const itemProps = asChild ? {} : href ? { href } : {};
+  ({ className, isCurrent, href, asChild = false, children, ...props }, ref) => {
+    // #309: `asChild` eskiden `React.Fragment`'e düşüyordu. Fragment yalnız `key` ve
+    // `children` kabul eder → aşağıdaki `className` sessizce KAYBOLUYOR ve React
+    // geliştirme modunda geçersiz-prop uyarısı basıyordu. Radix `Slot` prop'ları tek
+    // çocuğa birleştirir (className/style dahil) → hem stil hem a11y korunur.
+    const Comp = asChild ? Slot : href ? "a" : "span";
+    const itemProps = !asChild && href ? { href } : {};
 
     return (
       <li
         ref={ref}
         className={cn("moonui-theme", "inline-flex items-center gap-1.5", className)}
-        aria-current={isCurrent ? "page" : undefined}
         {...props}
       >
-        <Comp 
+        <Comp
+          // #309: `aria-current` eskiden yalnız sarmalayıcı <li>'deydi; APG breadcrumb
+          // deseni onu geçerli sayfayı temsil eden ELEMANDA ister. İkisinde birden
+          // bulunması çift duyuruya yol açacağı için <li>'den taşındı (kaldırılmadı).
+          aria-current={isCurrent ? "page" : undefined}
           className={cn(
             "transition-colors duration-200 hover:text-foreground",
-            isCurrent 
-              ? "font-medium text-foreground" 
+            isCurrent
+              ? "font-medium text-foreground"
               : "text-muted-foreground hover:text-foreground hover:underline hover:underline-offset-4 hover:decoration-muted-foreground/30"
           )}
           {...itemProps}
         >
-          {props.children}
+          {children}
         </Comp>
       </li>
     );
@@ -140,30 +168,51 @@ BreadcrumbItem.displayName = "BreadcrumbItem";
 const BreadcrumbSeparator = ({
   children,
   className,
+  icon,
   ...props
-}: BreadcrumbSeparatorProps) => (
-  <span
-    role="presentation"
-    aria-hidden="true"
-    className={cn("moonui-theme", "text-muted-foreground opacity-70", className)}
-    {...props}
-  >
-    {children || <ChevronRight className="h-3.5 w-3.5" />}
-  </span>
-);
+}: BreadcrumbSeparatorProps) => {
+  // #309: kök `<Breadcrumb separator={…}>` değeri; yerel `children`/`icon` bunu ezer.
+  const rootSeparator = React.useContext(BreadcrumbSeparatorContext);
+
+  return (
+    // Ayraç tümüyle dekoratiftir → `aria-hidden` burada DOĞRU (ellipsis'in aksine içinde
+    // ekran-okuyucuya ait metin yok).
+    <span
+      role="presentation"
+      aria-hidden="true"
+      className={cn("moonui-theme", "text-muted-foreground opacity-70", className)}
+      {...props}
+    >
+      {/* #309: `icon` prop'u tipte tanımlıydı ama HİÇ OKUNMUYORDU → `{...props}` ile
+          DOM'a sızıyor, React bilinmeyen-öznitelik uyarısı basıyordu. Artık `children`
+          verilmediğinde ayraç ikonu olarak kullanılıyor. */}
+      {children || icon || rootSeparator || <ChevronRight className="h-3.5 w-3.5" />}
+    </span>
+  );
+};
 BreadcrumbSeparator.displayName = "BreadcrumbSeparator";
 
 const BreadcrumbEllipsis = ({
   className,
+  icon,
   ...props
 }: BreadcrumbEllipsisProps) => (
+  // #309: `aria-hidden="true"` ESKİDEN BU ELEMANDAYDI → alt ağacın tamamı, içindeki
+  // `sr-only` "More pages" metni DAHİL, erişilebilirlik ağacından düşüyordu; yani metin
+  // hiçbir zaman duyurulmuyordu (eleman kendi amacını geçersiz kılıyordu). Gizleme artık
+  // yalnız dekoratif ikonda.
+  //
+  // `role="presentation"` KASITLI olarak korundu: span'in zaten örtük rolü yok, dolayısıyla
+  // zararsız ve alt ağacı GİZLEMEZ (aria-hidden'ın aksine) — kusur yalnız aria-hidden'dı.
   <span
     role="presentation"
-    aria-hidden="true"
     className={cn("moonui-theme", "flex items-center text-muted-foreground hover:text-foreground/80 transition-colors duration-200", className)}
     {...props}
   >
-    <MoreHorizontal className="h-4 w-4" />
+    <span aria-hidden="true" className="flex items-center">
+      {/* #309: `icon` prop'u — ayraçtaki ile aynı ölü-prop kusuru. */}
+      {icon || <MoreHorizontal className="h-4 w-4" />}
+    </span>
     <span className="sr-only">More pages</span>
   </span>
 );
@@ -206,4 +255,15 @@ export {
   BreadcrumbPage,
   BreadcrumbSeparator,
   BreadcrumbEllipsis,
+  breadcrumbVariants,
+};
+
+// #309: Props interface'lerinin hiçbiri export edilmiyordu → tüketici sarmalayıcı
+// yazarken tipi yeniden türetmek zorunda kalıyordu.
+export type {
+  BreadcrumbProps,
+  BreadcrumbListProps,
+  BreadcrumbItemProps,
+  BreadcrumbSeparatorProps,
+  BreadcrumbEllipsisProps,
 };

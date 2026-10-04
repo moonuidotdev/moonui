@@ -27,14 +27,16 @@ const collapsibleTriggerVariants = cva(
       },
       size: {
         sm: "text-xs py-2 px-3",
+        md: "text-sm py-3 px-4",
+        lg: "text-base py-4 px-4",
+        xl: "text-lg py-5 px-5",
+        /** @deprecated `md` kullanın — #319 kanonik skala; aynı çıktıyı üretir. */
         default: "text-sm py-3 px-4",
-        md: "text-base py-4 px-4",
-        lg: "text-lg py-5 px-5",
       },
     },
     defaultVariants: {
       variant: "default",
-      size: "default",
+      size: "md",
     },
   }
 )
@@ -85,14 +87,16 @@ const collapsibleContentVariants = cva(
       },
       size: {
         sm: "text-xs",
+        md: "text-sm",
+        lg: "text-base",
+        xl: "text-lg",
+        /** @deprecated `md` kullanın — #319 kanonik skala; aynı çıktıyı üretir. */
         default: "text-sm",
-        md: "text-base",
-        lg: "text-lg",
       },
     },
     defaultVariants: {
       variant: "default",
-      size: "default",
+      size: "md",
     },
   }
 )

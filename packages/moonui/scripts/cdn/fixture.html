@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MoonUI CDN guard fixture</title>
+
+    <!--
+      GUARD FIXTURE — verify-cdn.mjs tarafindan kullanilir, elle acilmaz.
+
+      Tek soruyu ikili cevaba baglar: "dist/cdn/ altindaki artefaktlarla hook
+      kullanan component'ler GERCEK tarayicida render olup ETKILESIYOR mu?"
+
+      Query parametreleri:
+        ?mode=iife   → <script src="moonui.global.js">, React sayfanin UMD'sinden
+        ?mode=esm    → <script type="module">, React importmap'ten
+        ?react=18|19 → hangi React surumu (vendor/ altindan, YEREL — ag gerektirmez)
+
+      Stil her iki modda da dist/cdn/moonui.css'ten gelir.
+    -->
+    <link rel="stylesheet" href="/dist/cdn/moonui.css" />
+    <script>
+        (function () {
+            var q = new URLSearchParams(location.search);
+            var mode = q.get("mode") === "iife" ? "iife" : "esm";
+            var reactMajor = q.get("react") === "18" ? "18" : "19";
+            window.__scenario = { mode: mode, react: reactMajor };
+
+            if (mode === "esm") {
+                // importmap HERHANGI bir modul yuklemesi baslamadan once belgede
+                // olmali. document.write ayristirma sirasinda senkron calisir.
+                var base = "/vendor/react" + reactMajor + "/";
+                document.write(
+                    '<script type="importmap">' +
+                    JSON.stringify({
+                        imports: {
+                            react: base + "react.mjs",
+                            "react/jsx-runtime": base + "jsx-runtime.mjs",
+                            "react/jsx-dev-runtime": base + "jsx-runtime.mjs",
+                            "react-dom": base + "react-dom.mjs",
+                            "react-dom/client": base + "react-dom-client.mjs",
+                        },
+                    }) +
+                    "<\/script>"
+                );
+            } else {
+                // IIFE yolu React'in UMD build'ini bekler (window.React /
+                // window.ReactDOM). React 19 UMD YAYIMLAMIYOR → verify-cdn.mjs
+                // bu modu yalniz React 18 ile kosar.
+                document.write('<script src="/vendor/react' + reactMajor + '/react.umd.js"><\/script>');
+                document.write('<script src="/vendor/react' + reactMajor + '/react-dom.umd.js"><\/script>');
+                document.write('<script src="/dist/cdn/moonui.global.js"><\/script>');
+            }
+        })();
+    </script>
+</head>
+<body class="bg-background text-foreground p-8">
+    <h1 class="text-2xl font-bold mb-6">MoonUI CDN guard — hook kullanan component'ler</h1>
+    <div id="root"></div>
+
+    <script type="module">
+        // ESM modunda gercek modul grafigi; IIFE modunda global'lerden okunur.
+        // Tek bir kaynak dosyayla iki modu da surmek icin ortak bolum
+        // scenario.js'te; burada yalniz koprulenir.
+        const { run } = await import("/scripts/cdn/scenario.js");
+        const scenario = window.__scenario;
+
+        let React, createRoot, MoonUI;
+        if (scenario.mode === "iife") {
+            React = window.React;
+            createRoot = window.ReactDOM.createRoot;
+            MoonUI = window.MoonUI;
+        } else {
+            React = await import("react");
+            createRoot = (await import("react-dom/client")).createRoot;
+            MoonUI = await import("/dist/cdn/moonui.esm.js");
+        }
+
+        window.__moduleReadyAt = Math.round(performance.now());
+        run({ React, createRoot, MoonUI });
+    </script>
+</body>
+</html>

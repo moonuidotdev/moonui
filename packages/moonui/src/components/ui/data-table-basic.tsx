@@ -135,30 +135,81 @@ export function DataTableBasic<TData, TValue>({
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
+                  /* #366: mevcut ikon guard'ı ile aynı koşul — `enableSorting`
+                     kapalıyken başlık tamamen etkileşimsizdir (eskiden onClick
+                     ve cursor-pointer yine de kalıyordu ama sortedRowModel
+                     olmadığından hiçbir görünür etki üretmiyordu). */
+                  const canSort = enableSorting && header.column.getCanSort();
+                  const sorted = header.column.getIsSorted();
+                  const headerDef = header.column.columnDef.header;
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead
+                      key={header.id}
+                      /* #366: sıralama durumu ekran okuyucuya YANSIMIYORDU
+                         (dosyada `aria-sort` grep'i 0 idi) — yalnız görsel ok
+                         ikonu değişiyordu. Sıralanamayan sütunda öznitelik hiç
+                         basılmaz. table.tsx'te #321, pro DataTable'da #291 ile
+                         aynı standart. */
+                      aria-sort={
+                        canSort
+                          ? sorted === "asc"
+                            ? "ascending"
+                            : sorted === "desc"
+                              ? "descending"
+                              : "none"
+                          : undefined
+                      }
+                    >
                       {header.isPlaceholder ? null : (
                         <div
                           className={cn(
                             "flex items-center gap-2",
-                            header.column.getCanSort() && "cursor-pointer select-none"
+                            canSort && "cursor-pointer select-none"
                           )}
-                          onClick={header.column.getToggleSortingHandler()}
+                          /* Fare kolaylığı: başlığın tamamı tıklanabilir kalır.
+                             Klavye yolu aşağıdaki GERÇEK <button>'dan geçer —
+                             bu div'e role="button" taklidi VERMİYORUZ çünkü
+                             başlık içeriği tüketiciden gelir (flexRender +
+                             `createSortableHeader` zaten Button render eder)
+                             ve rol taklidi buton-içinde-buton üretirdi; aynı
+                             hata pro DataTable'da #345'te düzeltilmişti. */
+                          onClick={
+                            canSort
+                              ? header.column.getToggleSortingHandler()
+                              : undefined
+                          }
                         >
                           {flexRender(
                             header.column.columnDef.header,
                             header.getContext()
                           )}
-                          {enableSorting && header.column.getCanSort() && (
-                            <div className="ml-auto">
-                              {header.column.getIsSorted() === "desc" ? (
+                          {canSort && (
+                            /* #366: sıralama kontrolü yalnız fareyle çalışıyordu
+                               (dosyada `tabIndex`/`onKeyDown` grep'i 0 idi).
+                               Gerçek <button> ile Tab + Enter/Space native
+                               gelir; görünür odak focus-visible ring ile. */
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                // Sarmalayıcı div de sıralıyor; çifte tetiklenmesin
+                                event.stopPropagation();
+                                header.column.getToggleSortingHandler()?.(event);
+                              }}
+                              aria-label={`Sort by ${
+                                typeof headerDef === "string"
+                                  ? headerDef
+                                  : header.column.id
+                              }`}
+                              className="ml-auto inline-flex items-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            >
+                              {sorted === "desc" ? (
                                 <ArrowDown className="h-4 w-4" />
-                              ) : header.column.getIsSorted() === "asc" ? (
+                              ) : sorted === "asc" ? (
                                 <ArrowUp className="h-4 w-4" />
                               ) : (
                                 <ArrowUpDown className="h-4 w-4 opacity-50" />
                               )}
-                            </div>
+                            </button>
                           )}
                         </div>
                       )}

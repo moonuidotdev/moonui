@@ -36,10 +36,12 @@ const datePickerVariants = cva(
         ghost: "hover:bg-accent hover:text-accent-foreground",
       },
       size: {
-        default: "h-10 px-4 py-2",
+        md: "h-10 px-4 py-2",
         sm: "h-8 px-3 text-sm",
         lg: "h-12 px-6 text-base",
         icon: "h-10 w-10",
+        /** @deprecated `md` kullanın — #319 kanonik skala; aynı çıktıyı üretir. */
+        default: "h-10 px-4 py-2",
       },
       state: {
         default: "",
@@ -50,7 +52,7 @@ const datePickerVariants = cva(
     },
     defaultVariants: {
       variant: "default",
-      size: "default",
+      size: "md",
       state: "default",
     },
   }
@@ -121,7 +123,12 @@ export interface DatePickerProps
   calendarProps?: React.ComponentProps<typeof Calendar>;
 }
 
-export function DatePicker({
+// NOT (issue #264): dört seçici de düz fonksiyondu, ref geçme yolu yoktu.
+// Her biri KENDİ gerçek kök DOM elemanına bağlanır — DOM yapısı değişmez.
+// DatePicker/DateTimePicker kök bir <div> render eder; DateRangePicker ve
+// MonthPicker'ın kökü Radix `Popover`'dır ve kendisi DOM üretmez, bu yüzden
+// onlarda ref tetikleyici butona gider.
+export const DatePicker = React.forwardRef<HTMLDivElement, DatePickerProps>(function DatePicker({
   className,
   variant,
   size,
@@ -143,7 +150,7 @@ export function DatePicker({
   calendarProps,
   disabled,
   ...props
-}: DatePickerProps) {
+}: DatePickerProps, ref: React.ForwardedRef<HTMLDivElement>) {
   const [open, setOpen] = React.useState(false);
   const [internalDate, setInternalDate] = React.useState<Date | undefined>(value);
 
@@ -163,7 +170,11 @@ export function DatePicker({
     }
   };
 
-  const handleClear = (e: React.MouseEvent) => {
+  // Hem fare hem klavye (Enter/Space) yolundan çağrılıyor; yalnızca
+  // `stopPropagation` kullanıldığı için ortak taban tipi yeterli.
+  // (Önceden `React.MouseEvent` bekliyordu ve klavye yolunda `as any` ile
+  // zorlanıyordu.)
+  const handleClear = (e: React.SyntheticEvent) => {
     e.stopPropagation();
     handleSelect(undefined);
   };
@@ -188,7 +199,14 @@ export function DatePicker({
   const iconElement = icon || <CalendarIcon className="h-4 w-4" />;
 
   return (
-    <div className="moonui-theme">
+    <div ref={ref} className="moonui-theme">
+      {/* #345: temizle kontrolü tetikleyici <button>ın İÇİNDEydi ve kendisi de
+          role="button" + tabIndex taşıyordu — hem `nested-interactive` (ARIA'da bir
+          button başka etkileşimli öğe içeremez) hem de geçersiz HTML (interactive
+          content model). #332'de tabs-pro kapat butonunda uygulanan desenle KARDEŞ
+          konuma alındı ve gerçek <button> oldu: rol taklidi, elle yazılmış Enter/Space
+          işleyicisi ve tabIndex artık gereksiz — tarayıcı hepsini kendisi verir. */}
+      <div className="relative">
       <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
@@ -196,6 +214,9 @@ export function DatePicker({
           className={cn(
             datePickerVariants({ variant, size, state }),
             !displayValue && "text-muted-foreground",
+            // #345: temizle butonu artık MUTLAK konumlu bir kardeş — uzun tarih
+            // metninin altına girmemesi için sağda yer ayrılıyor.
+            allowClear && displayValue && !readOnly && !disabled && "pr-9",
             className
           )}
           disabled={disabled || readOnly}
@@ -217,45 +238,10 @@ export function DatePicker({
               {iconPosition === "right" && iconElement}
             </motion.div>
           </AnimatePresence>
-          {allowClear && displayValue && !readOnly && !disabled && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              className="ml-2 h-4 w-4 shrink-0 opacity-50 hover:opacity-100 transition-opacity cursor-pointer"
-              onClick={handleClear}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  handleClear(e as any);
-                }
-              }}
-            >
-              <span className="sr-only">Clear date</span>
-              <svg
-                width="15"
-                height="15"
-                viewBox="0 0 15 15"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M11.7816 4.03157C12.0062 3.80702 12.0062 3.44295 11.7816 3.2184C11.5571 2.99385 11.193 2.99385 10.9685 3.2184L7.50005 6.68682L4.03164 3.2184C3.80708 2.99385 3.44301 2.99385 3.21846 3.2184C2.99391 3.44295 2.99391 3.80702 3.21846 4.03157L6.68688 7.49999L3.21846 10.9684C2.99391 11.193 2.99391 11.557 3.21846 11.7816C3.44301 12.0061 3.80708 12.0061 4.03164 11.7816L7.50005 8.31316L10.9685 11.7816C11.193 12.0061 11.5571 12.0061 11.7816 11.7816C12.0062 11.557 12.0062 11.193 11.7816 10.9684L8.31322 7.49999L11.7816 4.03157Z"
-                  fill="currentColor"
-                  fillRule="evenodd"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </motion.div>
-          )}
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-[360px] p-0 shadow-2xl rounded-2xl border border-gray-200 dark:border-gray-700 bg-background/95 backdrop-blur-sm !z-[9999]" 
+        className="w-[360px] p-0 shadow-2xl rounded-2xl border border-border bg-background/95 backdrop-blur-sm !z-[9999]" 
         align="start"
         sideOffset={12}
       >
@@ -286,10 +272,36 @@ export function DatePicker({
           )}
         </motion.div>
       </PopoverContent>
-    </Popover>
+      </Popover>
+      {allowClear && displayValue && !readOnly && !disabled && (
+        <button
+          type="button"
+          onClick={handleClear}
+          aria-label="Clear date"
+          className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 shrink-0 opacity-50 hover:opacity-100 transition-opacity"
+        >
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 15 15"
+            fill="none"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M11.7816 4.03157C12.0062 3.80702 12.0062 3.44295 11.7816 3.2184C11.5571 2.99385 11.193 2.99385 10.9685 3.2184L7.50005 6.68682L4.03164 3.2184C3.80708 2.99385 3.44301 2.99385 3.21846 3.2184C2.99391 3.44295 2.99391 3.80702 3.21846 4.03157L6.68688 7.49999L3.21846 10.9684C2.99391 11.193 2.99391 11.557 3.21846 11.7816C3.44301 12.0061 3.80708 12.0061 4.03164 11.7816L7.50005 8.31316L10.9685 11.7816C11.193 12.0061 11.5571 12.0061 11.7816 11.7816C12.0062 11.557 12.0062 11.193 11.7816 10.9684L8.31322 7.49999L11.7816 4.03157Z"
+              fill="currentColor"
+              fillRule="evenodd"
+              clipRule="evenodd"
+            />
+          </svg>
+        </button>
+      )}
+      </div>
     </div>
   );
-}
+});
+DatePicker.displayName = "DatePicker";
 
 /**
  * DateRangePicker Component
@@ -302,18 +314,18 @@ export interface DateRangePickerProps
   /**
    * Selected date range
    */
-  value?: { from: Date | undefined; to: Date | undefined };
+  value?: { from: Date | undefined; to?: Date | undefined };
   /**
    * Callback when date range changes
    */
-  onChange?: (range: { from: Date | undefined; to: Date | undefined } | undefined) => void;
+  onChange?: (range: { from: Date | undefined; to?: Date | undefined } | undefined) => void;
   /**
    * Separator between dates
    */
   separator?: string;
 }
 
-export function DateRangePicker({
+export const DateRangePicker = React.forwardRef<HTMLButtonElement, DateRangePickerProps>(function DateRangePicker({
   className,
   value,
   onChange,
@@ -321,7 +333,7 @@ export function DateRangePicker({
   formatString = "LLL dd, y",
   separator = " - ",
   ...props
-}: DateRangePickerProps) {
+}: DateRangePickerProps, ref: React.ForwardedRef<HTMLButtonElement>) {
   const [open, setOpen] = React.useState(false);
   const [internalRange, setInternalRange] = React.useState(value);
 
@@ -329,7 +341,10 @@ export function DateRangePicker({
     setInternalRange(value);
   }, [value]);
 
-  const handleSelect = (range: { from: Date | undefined; to: Date | undefined } | undefined) => {
+  // NOT: `to` OPSİYONEL. react-day-picker'ın `DateRange` tipi de öyle
+  // (`to?: Date | undefined`). Önce burada zorunlu-ama-undefined yazılmıştı ve
+  // uyuşmadığı için `onSelect={handleSelect}` cast'i gerekiyordu.
+  const handleSelect = (range: { from: Date | undefined; to?: Date | undefined } | undefined) => {
     setInternalRange(range);
     onChange?.(range);
     if (range?.from && range?.to) {
@@ -352,6 +367,7 @@ export function DateRangePicker({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          ref={ref}
           variant={props.variant === "ghost" ? "ghost" : "outline"}
           className={cn(
             datePickerVariants({ 
@@ -370,12 +386,12 @@ export function DateRangePicker({
           </span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0 shadow-2xl rounded-2xl border border-gray-200 dark:border-gray-700 bg-background/95 backdrop-blur-sm !z-[9999]" align="start" sideOffset={12}>
+      <PopoverContent className="w-auto p-0 shadow-2xl rounded-2xl border border-border bg-background/95 backdrop-blur-sm !z-[9999]" align="start" sideOffset={12}>
         <Calendar
           mode="range"
           defaultMonth={internalRange?.from}
           selected={internalRange}
-          onSelect={handleSelect as any}
+          onSelect={handleSelect}
           showOutsideDays={false}
           {...props.calendarProps}
           className="rounded-2xl"
@@ -383,7 +399,8 @@ export function DateRangePicker({
       </PopoverContent>
     </Popover>
   );
-}
+});
+DateRangePicker.displayName = "DateRangePicker";
 
 /**
  * DateTimePicker Component
@@ -406,15 +423,18 @@ export interface DateTimePickerProps extends DatePickerProps {
   timeInterval?: number;
 }
 
-export function DateTimePicker({
+export const DateTimePicker = React.forwardRef<HTMLDivElement, DateTimePickerProps>(function DateTimePicker({
   value,
   onChange,
-  formatString = "PPP p",
+  // Saat ayrı bir <select> ile gösterildiği için buton yalnızca TARİHİ yazar;
+  // varsayılan bu yüzden "PPP p" değil "PPP". (Eski hâlde "PPP p" alınıp hiç
+  // kullanılmıyordu — çağıranın verdiği formatString sessizce yok sayılıyordu.)
+  formatString = "PPP",
   showTimePicker = true,
   timeFormat = "24",
   timeInterval = 15,
   ...props
-}: DateTimePickerProps) {
+}: DateTimePickerProps, ref: React.ForwardedRef<HTMLDivElement>) {
   const [date, setDate] = React.useState<Date | undefined>(value);
   const [time, setTime] = React.useState<string>(
     value ? format(value, timeFormat === "24" ? "HH:mm" : "hh:mm a") : "00:00"
@@ -469,12 +489,12 @@ export function DateTimePicker({
   }, [timeFormat, timeInterval]);
 
   return (
-    <div className="flex flex-col gap-2">
+    <div ref={ref} className="flex flex-col gap-2">
       <DatePicker
         {...props}
         value={date}
         onChange={handleDateChange}
-        formatString="PPP"
+        formatString={formatString}
         showTodayButton={false}
       />
       {showTimePicker && date && (
@@ -500,7 +520,8 @@ export function DateTimePicker({
       )}
     </div>
   );
-}
+});
+DateTimePicker.displayName = "DateTimePicker";
 
 /**
  * MonthPicker Component
@@ -515,13 +536,13 @@ export interface MonthPickerProps extends Omit<DatePickerProps, "formatString"> 
   formatString?: string;
 }
 
-export function MonthPicker({
+export const MonthPicker = React.forwardRef<HTMLButtonElement, MonthPickerProps>(function MonthPicker({
   value,
   onChange,
   placeholder = "Pick a month",
   formatString = "MMMM yyyy",
   ...props
-}: MonthPickerProps) {
+}: MonthPickerProps, ref: React.ForwardedRef<HTMLButtonElement>) {
   const [open, setOpen] = React.useState(false);
   const [viewDate, setViewDate] = React.useState(value || new Date());
 
@@ -550,6 +571,7 @@ export function MonthPicker({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          ref={ref}
           variant={props.variant === "default" ? "outline" : (props.variant || "outline")}
           className={cn(
             datePickerVariants({ 
@@ -566,12 +588,15 @@ export function MonthPicker({
           {displayValue || placeholder}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-0 shadow-2xl border border-gray-200 dark:border-gray-700 bg-background !z-[9999]" align="start">
+      <PopoverContent className="w-64 p-0 shadow-2xl border border-border bg-background !z-[9999]" align="start">
         <div className="p-3">
           <div className="flex items-center justify-between mb-3">
+            {/* İkon-only butonlar: erişilebilir ad olmadan ekran okuyucu
+                yalnızca "button" der, hangi yöne gidileceği anlaşılmaz. */}
             <Button
               variant="outline"
               size="icon"
+              aria-label={`Previous year, ${viewDate.getFullYear() - 1}`}
               onClick={() => handleYearChange(-1)}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -582,6 +607,7 @@ export function MonthPicker({
             <Button
               variant="outline"
               size="icon"
+              aria-label={`Next year, ${viewDate.getFullYear() + 1}`}
               onClick={() => handleYearChange(1)}
             >
               <ChevronRight className="h-4 w-4" />
@@ -604,7 +630,8 @@ export function MonthPicker({
       </PopoverContent>
     </Popover>
   );
-}
+});
+MonthPicker.displayName = "MonthPicker";
 
 // Re-export utilities
 export { format } from "date-fns";

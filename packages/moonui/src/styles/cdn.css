@@ -1,0 +1,20 @@
+/* MoonUI — CDN CSS giris noktasi.
+ *
+ * ⚠️ SIRA ONEMLIDIR — bu dosyanin varlik sebebi budur.
+ * CSS'te `@import` diger kurallardan ONCE gelmek zorundadir. Kardes dosya
+ * `index.css` token import'larini `@tailwind` direktiflerinden SONRA yaziyor;
+ * postcss-import bu yuzden onlari SESSIZCE dusuruyor. Olculdu (plan §2.3):
+ * index.css girdisiyle uretilen CSS'te `--primary:` / `--background:` tanimi
+ * HIC YOK → butun renkler bos kalir, component'ler renksiz cikar.
+ *
+ * Bu dosya `tailwind.cdn.config.js` ile birlikte `dist/cdn/moonui.css`i uretir
+ * (npm run build:cdn:css). index.css'i DEGISTIRMIYORUZ: o dosya tuketicinin
+ * kendi Tailwind build'inde kullanilir ve orada `@import` sirasi baska bir
+ * davranisa bagli olabilir — CDN icin ayri ve dogru bir giris tutmak daha ucuz.
+ */
+@import "./tokens.css";
+@import "./design-system.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

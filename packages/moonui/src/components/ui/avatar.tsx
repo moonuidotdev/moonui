@@ -11,13 +11,14 @@ const avatarVariants = cva(
   {
     variants: {
       size: {
-        default: "h-10 w-10",
         xs: "h-6 w-6",
         sm: "h-8 w-8",
         md: "h-10 w-10",
         lg: "h-12 w-12",
         xl: "h-16 w-16",
         "2xl": "h-20 w-20",
+        /** @deprecated `md` kullanın — #319 kanonik skala; aynı çıktıyı üretir. */
+        default: "h-10 w-10",
       },
       radius: {
         default: "rounded-full",
@@ -34,7 +35,7 @@ const avatarVariants = cva(
       }
     },
     defaultVariants: {
-      size: "default",
+      size: "md",
       radius: "default",
       variant: "default"
     },
@@ -57,12 +58,27 @@ const Avatar = React.forwardRef<
 ));
 Avatar.displayName = AvatarPrimitive.Root.displayName;
 
+/**
+ * #345: `alt` verilmezse BOŞ STRING basılır — yani görsel "dekoratif" işaretlenir.
+ *
+ * Bu, `alt` özniteliğini tamamen atlamaktan farklıdır: öznitelik yokken axe
+ * `image-alt` (critical) ihlali sayar ve ekran okuyucu dosya adını okumaya kalkar.
+ *
+ * Neden ADIN kendisi varsayılan yapılmadı: avatar neredeyse her zaman kişinin adının
+ * YANINDA durur (kanban aktivite akışı, timeline, activity-feed hepsi böyle). Adı
+ * `alt`a da koymak aynı bilgiyi iki kez duyurur — axe bunu ayrı bir kural olarak
+ * (`image-redundant-alt`) ihlal sayar. Doğru varsayılan "dekoratif"tir.
+ *
+ * Avatar TEK BAŞINA kimlik taşıyorsa (yanında ad metni yoksa — ör. bir avatar grubu)
+ * tüketici `alt={name}` vermelidir; aşağıdaki varsayılan onu ezmez.
+ */
 const AvatarImage = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Image>,
   React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>
->(({ className, ...props }, ref) => (
+>(({ className, alt = "", ...props }, ref) => (
   <AvatarPrimitive.Image
     ref={ref}
+    alt={alt}
     className={cn("moonui-theme", "aspect-square h-full w-full", className)}
     {...props}
   />
@@ -85,16 +101,28 @@ const AvatarFallback = React.forwardRef<
 AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName;
 
 // Avatar Group Component for displaying multiple avatars
-interface AvatarGroupProps extends React.HTMLAttributes<HTMLDivElement> {
-  limit?: number;
-  avatars: React.ReactNode[];
+//
+// KIRICI (issue #260): prop sözleşmesi `limit`/`avatars: ReactNode[]` idi;
+// pro paketteki kardeşi (`MoonUIAvatarGroupPro`) ise `max`/`children` kullanıyordu
+// — aynı bileşen ailesi için iki farklı API. Standart React deseni (children)
+// kanonik kabul edilip free tarafı pro'ya hizalandı.
+//
+// Geçiş:  <AvatarGroup limit={3} avatars={[<Avatar/>, <Avatar/>]} />
+//     →   <AvatarGroup max={3}><Avatar/><Avatar/></AvatarGroup>
+export interface AvatarGroupProps extends React.HTMLAttributes<HTMLDivElement> {
+  /** Gösterilecek en fazla avatar sayısı; kalanlar "+N" olarak özetlenir. */
+  max?: number;
+  /** Avatar bileşenleri. */
+  children?: React.ReactNode;
+  /** Avatar'lar arası üst üste binme miktarı (px, negatif). */
   overlapOffset?: number;
 }
 
 const AvatarGroup = React.forwardRef<HTMLDivElement, AvatarGroupProps>(
-  ({ className, limit, avatars, overlapOffset = -8, ...props }, ref) => {
-    const visibleAvatars = limit ? avatars.slice(0, limit) : avatars;
-    const remainingCount = limit ? Math.max(0, avatars.length - limit) : 0;
+  ({ className, max, children, overlapOffset = -8, ...props }, ref) => {
+    const childrenArray = React.Children.toArray(children);
+    const visibleAvatars = max ? childrenArray.slice(0, max) : childrenArray;
+    const remainingCount = max ? Math.max(0, childrenArray.length - max) : 0;
 
     return (
       <div

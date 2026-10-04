@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://moonui.design/logo.svg" alt="MoonUI Logo" width="120" height="120">
+  <img src="https://moonui.dev/favicon-512x512.png" alt="MoonUI Logo" width="120" height="120">
   
   # MoonUI Kit
   
@@ -8,11 +8,9 @@
   </p>
   
   <p align="center">
-    <a href="https://moonui.design">Documentation</a>
+    <a href="https://moonui.dev">Documentation</a>
     ·
-    <a href="https://moonui.design/components">Components</a>
-    ·
-    <a href="https://moonui.design/playground">Playground</a>
+    <a href="https://moonui.dev/components">Components</a>
     ·
     <a href="https://github.com/oguzhanayyldz/moonuikit/issues">Report Bug</a>
   </p>
@@ -30,9 +28,6 @@
     <a href="https://github.com/oguzhanayyldz/moonuikit/stargazers">
       <img src="https://img.shields.io/github/stars/oguzhanayyldz/moonuikit?style=flat-square&color=yellow" alt="GitHub Stars">
     </a>
-    <a href="https://discord.gg/moonui">
-      <img src="https://img.shields.io/discord/123456789?style=flat-square&color=purple&label=Discord" alt="Discord">
-    </a>
   </p>
 </div>
 
@@ -40,7 +35,7 @@
 
 ## ✨ Features
 
-- 🎨 **50+ Free Components** - High-quality, production-ready React components
+- 🎨 **45 Free Components** - High-quality, production-ready React components
 - 🎯 **Built on Radix UI** - Accessible, unstyled primitives for building design systems
 - 💅 **Tailwind CSS** - Utility-first CSS framework for rapid UI development
 - 🌙 **Dark Mode** - Built-in dark mode support with CSS variables
@@ -113,7 +108,7 @@ function App() {
 
 ## 📦 Components
 
-### Free Components (50+)
+### Free Components (45)
 
 <table>
 <tr>
@@ -185,7 +180,7 @@ function App() {
 </tr>
 </table>
 
-### 💎 Pro Components (200+)
+### 💎 Pro Components (120+ Pro-only)
 
 Unlock advanced components with Pro:
 
@@ -197,7 +192,7 @@ Unlock advanced components with Pro:
 - Charts & Analytics
 - And much more...
 
-[View all Pro components →](https://moonui.design/pricing)
+[View all Pro components →](https://moonui.dev/pricing)
 
 ## 🎨 Theming
 
@@ -283,10 +278,9 @@ If you find MoonUI helpful, please consider:
 
 ## 🔗 Links
 
-- [Website](https://moonui.design)
-- [Documentation](https://moonui.design/docs)
+- [Website](https://moonui.dev)
+- [Documentation](https://moonui.dev/docs)
 - [NPM Package](https://www.npmjs.com/package/@moontra/moonui)
-- [Discord Community](https://discord.gg/moonui)
 - [Twitter](https://twitter.com/moonuidesign)
 
 ---
@@ -294,5 +288,5 @@ If you find MoonUI helpful, please consider:
 <div align="center">
   <strong>Ready to build something amazing?</strong>
   
-  [Get Started →](https://moonui.design/docs/getting-started)
+  [Get Started →](https://moonui.dev/docs/installation)
 </div>

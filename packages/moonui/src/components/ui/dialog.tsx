@@ -73,12 +73,14 @@ const dialogContentVariants = cva(
             size: {
                 xs: "max-w-xs p-4",
                 sm: "max-w-sm p-5",
-                default: "max-w-lg p-6",
+                lg: "max-w-lg p-6",
                 md: "max-w-md p-6",
-                lg: "max-w-2xl p-7",
-                xl: "max-w-4xl p-8",
+                xl: "max-w-2xl p-7",
+                "2xl": "max-w-4xl p-8",
                 full: "max-w-[95vw] max-h-[95vh] p-6",
-            },
+                /** @deprecated `lg` kullanın — #319 kanonik skala; aynı çıktıyı üretir. */
+                default: "max-w-lg p-6",
+              },
             radius: {
                 none: "rounded-none",
                 sm: "rounded-md",
@@ -103,7 +105,7 @@ const dialogContentVariants = cva(
         },
         defaultVariants: {
             variant: "default",
-            size: "default",
+            size: "lg",
             radius: "default",
             animation: "default",
             position: "default",

@@ -5,6 +5,17 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../../lib/utils";
 import { Loader2 } from "lucide-react";
 
+// #296: Form kontrolü kenarlıkları hardcode Tailwind grisi kullanıyordu ve
+// `--input` token'ını tamamen atlıyordu; #284'ün token onarımı bu yüzeylere
+// hiç ulaşmıyordu. Ölçüldü (WCAG 1.4.11, eşik 3.0):
+//   border-gray-200 1.24 · border-gray-300 1.47 · dark:border-gray-700 1.72
+//   dark:border-gray-600 2.35 · hover:border-gray-400 2.54  → hepsi KALIYOR
+// `border-input` ile: açık 3.11, koyu 3.37 — ikisi de geçiyor.
+// Hover kenarlık ezmeleri kaldırıldı: taban kenarlık zaten eşiği geçiyor,
+// ayrı bir hover grisi tutmak yalnız token'ı yeniden atlamak olurdu.
+// NOT: text-gray-* sınıflarına DOKUNULMADI — hepsi kontrastı geçiyor
+// (4.83–17.74); onları çevirmek estetik refactor olurdu, a11y kazancı yok.
+
 /**
  * Premium Input Component
  * 
@@ -31,7 +42,7 @@ const inputWrapperVariants = cva(
 const inputVariants = cva(
   [
     "w-full bg-background transition-all duration-200",
-    "text-foreground placeholder:text-muted-foreground dark:placeholder:text-gray-500", 
+    "text-foreground placeholder:text-muted-foreground", 
     "disabled:cursor-not-allowed disabled:opacity-50",
     "file:border-0 file:bg-transparent file:font-medium",
     "focus-visible:outline-none dark:text-gray-200"
@@ -39,10 +50,10 @@ const inputVariants = cva(
   {
     variants: {
       variant: {
-        standard: "border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 hover:border-gray-400 dark:hover:border-gray-600 focus-visible:ring-2 focus-visible:ring-primary/30 dark:focus-visible:ring-primary/20 focus-visible:border-primary dark:focus-visible:border-primary/80 dark:bg-gray-800/80 dark:shadow-inner dark:shadow-gray-950/10",
+        standard: "border border-input rounded-md px-3 py-2 focus-visible:ring-2 focus-visible:ring-primary/30 dark:focus-visible:ring-primary/20 focus-visible:border-primary dark:focus-visible:border-primary/80 dark:bg-gray-800/80 dark:shadow-inner dark:shadow-gray-950/10",
         filled: "border border-transparent bg-gray-100 dark:bg-gray-800 rounded-md px-3 py-2 hover:bg-gray-200 dark:hover:bg-gray-700 focus-visible:ring-2 focus-visible:ring-primary/30 dark:focus-visible:ring-primary/20 dark:shadow-inner dark:shadow-gray-950/10",
-        ghost: "border-none bg-transparent shadow-none px-1 dark:text-gray-300 dark:placeholder:text-gray-500 hover:bg-gray-100/50 dark:hover:bg-gray-800/30 focus-visible:bg-transparent",
-        underline: "border-t-0 border-l-0 border-r-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 py-2 hover:border-gray-400 dark:hover:border-gray-500 focus-visible:ring-0 focus-visible:border-b-2 focus-visible:border-primary dark:focus-visible:border-primary/80 dark:text-gray-300 dark:bg-transparent",
+        ghost: "border-none bg-transparent shadow-none px-1 dark:text-gray-300 hover:bg-gray-100/50 dark:hover:bg-gray-800/30 focus-visible:bg-transparent",
+        underline: "border-t-0 border-l-0 border-r-0 border-b border-input rounded-none px-0 py-2 focus-visible:ring-0 focus-visible:border-b-2 focus-visible:border-primary dark:focus-visible:border-primary/80 dark:text-gray-300 dark:bg-transparent",
       },
       size: {
         sm: "h-8 text-xs",
@@ -157,6 +168,11 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     placeholder,
     ...props
   }, ref) => {
+    // Mesaj id'leri `props.id` yoksa "-error"/"-success" gibi SABİT string'e
+    // düşüyordu; aynı sayfada iki id'siz Input olduğunda DOM'da yinelenen id
+    // oluşuyor ve aria-describedby yanlış elemanı işaret ediyordu.
+    const reactId = React.useId();
+    const fieldId = props.id || reactId;
     // Floating label state management
     const [isFocused, setIsFocused] = React.useState(false);
     const [internalValue, setInternalValue] = React.useState(value || defaultValue || "");
@@ -242,7 +258,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             data-error={!!error ? "" : undefined}
             data-success={!!success ? "" : undefined}
             aria-invalid={!!error || !!isError || undefined}
-            aria-describedby={error ? `${props.id || ''}-error` : success ? `${props.id || ''}-success` : undefined}
+            aria-describedby={error ? `${fieldId}-error` : success ? `${fieldId}-success` : undefined}
             value={value}
             defaultValue={defaultValue}
             onChange={handleChange}
@@ -280,7 +296,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               messageType === "normal" && "text-muted-foreground",
               messageClassName
             )}
-            id={error ? `${props.id || ''}-error` : success ? `${props.id || ''}-success` : undefined}
+            id={error ? `${fieldId}-error` : success ? `${fieldId}-success` : undefined}
           >
             {error || success || ""}
           </p>

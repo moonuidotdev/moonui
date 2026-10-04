@@ -7,6 +7,77 @@ import { cn } from "../../lib/utils";
 
 export type SortDirection = "asc" | "desc" | null;
 
+/**
+ * Tablo düzeyi kontrollü sıralama bağlamı (#321).
+ *
+ * `Table`'daki `sortColumn`/`sortDirection`/`onSortChange` deklare edilmişti ama
+ * destructure'da yoruma alındığı için `...props` içinde kalıp native <table>'a
+ * sızıyordu (ölçüldü: `sortcolumn`/`sortdirection` geçersiz DOM attribute +
+ * 4 React uyarısı). Artık gerçekten bağlılar.
+ *
+ * `TableHead`'in mevcut `sorted`/`onSort` prop'ları KORUNUR ve önceliklidir —
+ * elle bağlayan tüketici kırılmaz. `columnId` verildiğinde bağlam devreye girer.
+ */
+interface TableSortContextValue {
+  sortColumn?: string;
+  sortDirection?: SortDirection;
+  onSortChange?: (column: string, direction: SortDirection) => void;
+}
+
+const TableSortContext = React.createContext<TableSortContextValue | null>(null);
+
+/**
+ * Zebra (striped) bağlamı (#444).
+ *
+ * ESKİ HÂLİ İKİ AYRI NEDENLE ÇALIŞMIYORDU:
+ *  1. `Table`, çocuklarını gezip `child.type === "tbody"` diye STRING
+ *     karşılaştırıyordu. `TableBody` bir `React.forwardRef` nesnesidir; bu koşul
+ *     hiçbir zaman doğru olmaz → `striped` sınıfı HİÇ eklenmiyordu (ölçüldü:
+ *     `variant="striped"` çıktısı `variant="default"` ile birebir aynıydı).
+ *  2. Koşul düzelse bile hedeflenen sınıf yanlıştı: `even:[&>tr]:bg-muted/50`
+ *     içindeki `even:` tbody'nin KENDİ kardeş sırasına bakar (tek tbody varsa hiç
+ *     eşleşmez), satırlara değil.
+ *
+ * Artık `Table` yalnızca bir bayrak YAYINLAR; zebra sınıfını `TableRow` kendi
+ * üstüne koyar. Böylece eleman-tipi karşılaştırması tamamen kalkar: satırlar
+ * fragment, `.map()`, ara sarmalayıcı bir component ya da düz `<tbody>` içinden
+ * gelse de çalışır. `TableHeader`/`TableFooter` bayrağı `false`'a çevirir —
+ * başlık satırı ve `bg-primary` zeminli altbilgi satırı çizgilenmemelidir.
+ */
+const TableStripedContext = React.createContext(false);
+
+/**
+ * Zebra + etkileşim yüzeyleri (#444) — ölçülmüş değerler, tokens.css'e dokunulmadan.
+ *
+ * `odd:bg-muted/50` → satır düzeyi zebra. `:nth-child(odd)` satırın kendi
+ * kardeş sırasına bakar, yani gerçekten 1./3./5. GÖVDE SATIRI boyanır.
+ *
+ * `hover:bg-accent` → zebra açıkken ZORUNLU: `TableRow`'un varsayılan hover'ı
+ * zaten `bg-muted/50`, yani şeritle AYNI renk; override olmasa çizgili satırlarda
+ * hover geri bildirimi görünmez olurdu. `--accent` bu tasarım sisteminin kanonik
+ * etkileşim yüzeyidir (button ghost/outline, dropdown item aynı token'ı kullanır).
+ * `cn()` = twMerge olduğu için `hover:bg-muted/50` ile çakışma CSS sırasına değil,
+ * deterministik olarak sona yazılan sınıfa göre çözülür.
+ *
+ * `bg-muted` (tam opaklık) BİLEREK seçilmedi: `data-[state=selected]:bg-muted` ile
+ * birebir aynı renk olurdu ve çizgili tabloda seçili satır seçilmemişten
+ * ayırt edilemezdi. Ölçülen CIE L* değerleri (zemin → şerit → seçili → hover):
+ *   açık tema : 100 → 98.06 → 96.12 → 94.09   (şerit ΔL* 1.94, kontrast 1.05:1)
+ *   koyu tema :  1.89 →  9.61 → 18.96 → 16.06 (şerit ΔL* 7.72, kontrast 1.17:1)
+ * Dört yüzey de her iki temada ayrı; hover her satır paritesinde görünür değişir.
+ * WCAG 1.4.11'in 3:1 eşiği zebraya UYGULANMAZ — şerit dekoratif bir tarama
+ * yardımıdır, içeriği anlamak için gerekli bir grafik ya da UI bileşeni değildir
+ * (veri hücre metninde; metin kontrastı her iki temada AA üstünde kalır).
+ */
+const STRIPED_ROW_CLASSES = "odd:bg-muted/50 hover:bg-accent";
+
+/** asc → desc → null → asc döngüsü */
+function nextSortDirection(current: SortDirection): SortDirection {
+  if (current === "asc") return "desc";
+  if (current === "desc") return null;
+  return "asc";
+}
+
 const tableVariants = cva(
   "w-full caption-bottom text-sm",
   {
@@ -20,13 +91,15 @@ const tableVariants = cva(
       },
       size: {
         sm: "text-xs",
-        default: "text-sm",
+        md: "text-sm",
         lg: "text-base",
+        /** @deprecated `md` kullanın — #319 kanonik skala; aynı çıktıyı üretir. */
+        default: "text-sm",
       },
     },
     defaultVariants: {
       variant: "default",
-      size: "default",
+      size: "md",
     },
   }
 );
@@ -72,33 +145,32 @@ const Table = React.forwardRef<
   size, 
   loading, 
   emptyContent,
-  // Kullanılmayan özellikleri yoruma alarak lint uyarılarını önlüyoruz
-  // sortColumn,
-  // sortDirection,
-  // onSortChange,
-  // selectedRowIds,
-  // onRowSelectionChange,
-  // disableRowSelection,
-  // getRowId,
-  ...props 
+  // #321: Bunlar eskiden yoruma alınmıştı ve `...props` içinde kalıp native
+  // <table>'a sızıyordu (ölçüldü: `sortcolumn`/`sortdirection` geçersiz DOM
+  // attribute olarak basılıyor + 4 React uyarısı). Artık destructure ediliyorlar:
+  //   • sıralama üçlüsü GERÇEKTEN bağlandı (aşağıdaki TableSortContext)
+  //   • seçim dörtlüsü yalnız DOM'dan ÇIKARILIYOR — bağlanamazlar, çünkü `Table`
+  //     veri almıyor (tamamen kompozisyonel) ve `getRowId(row)` bir veri satırı
+  //     ister. Satır seçimi için veri-güdümlü `DataTable` kullanılmalı.
+  sortColumn,
+  sortDirection,
+  onSortChange,
+  selectedRowIds: _selectedRowIds,
+  onRowSelectionChange: _onRowSelectionChange,
+  disableRowSelection: _disableRowSelection,
+  getRowId: _getRowId,
+  children,
+  ...props
 }, ref) => {
-  // Apply striped styles to the tbody via a class name
+  // #444: zebra bir bayrak olarak yayınlanır; sınıfı TableRow kendi üstüne koyar.
   const striped = variant === "striped";
-  
-  // Çocukları güvenli bir şekilde işle ve tip kontrollerini doğru yap
-  const childrenWithProps = React.Children.map(props.children, (child) => {
-    if (React.isValidElement(child)) {
-      if (child.type === "tbody") {
-        // Tip güvenliği için props'ları düzgün şekilde ele alıyoruz
-        const tbodyProps = child.props as Record<string, unknown>;
-        return React.cloneElement(child as React.ReactElement<React.HTMLAttributes<HTMLTableSectionElement>>, {
-          className: cn(tbodyProps.className as string | undefined, striped && "even:[&>tr]:bg-muted/50")
-        });
-      }
-    }
-    return child;
-  });
-  
+
+  // #321: sıralama prop'ları alt başlıklara bağlam üzerinden ulaşır
+  const sortContextValue = React.useMemo<TableSortContextValue>(
+    () => ({ sortColumn, sortDirection, onSortChange }),
+    [sortColumn, sortDirection, onSortChange]
+  );
+
   return (
     <div className="relative w-full overflow-auto">
       {/* Yükleniyor durumu için overlay */}
@@ -108,18 +180,21 @@ const Table = React.forwardRef<
         </div>
       )}
       
-      <table
-        ref={ref}
-        className={cn(
-          tableVariants({ variant, size }),
-          loading && "opacity-70",
-          className
-        )}
-        {...props}
-      >
-        {childrenWithProps}
-      </table>
-      
+      <TableSortContext.Provider value={sortContextValue}>
+        <TableStripedContext.Provider value={striped}>
+          <table
+            ref={ref}
+            className={cn(
+              tableVariants({ variant, size }),
+              loading && "opacity-70",
+              className
+            )}
+            {...props}
+          >
+            {children}
+          </table>
+        </TableStripedContext.Provider>
+      </TableSortContext.Provider>
     </div>
   );
 });
@@ -128,8 +203,11 @@ Table.displayName = "Table";
 const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
->(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn("moonui-theme", "[&_tr]:border-b", className)} {...props} />
+>(({ className, children, ...props }, ref) => (
+  <thead ref={ref} className={cn("moonui-theme", "[&_tr]:border-b", className)} {...props}>
+    {/* #444: başlık satırı zebraya dahil değildir */}
+    <TableStripedContext.Provider value={false}>{children}</TableStripedContext.Provider>
+  </thead>
 ));
 TableHeader.displayName = "TableHeader";
 
@@ -176,28 +254,37 @@ TableBody.displayName = "TableBody";
 const TableFooter = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
->(({ className, ...props }, ref) => (
+>(({ className, children, ...props }, ref) => (
   <tfoot
     ref={ref}
     className={cn("moonui-theme", "bg-primary text-primary-foreground font-medium", className)}
     {...props}
-  />
+  >
+    {/* #444: altbilginin kendi `bg-primary` zemini var; şerit onu bozmamalı */}
+    <TableStripedContext.Provider value={false}>{children}</TableStripedContext.Provider>
+  </tfoot>
 ));
 TableFooter.displayName = "TableFooter";
 
 const TableRow = React.forwardRef<
   HTMLTableRowElement,
   React.HTMLAttributes<HTMLTableRowElement>
->(({ className, ...props }, ref) => (
-  <tr
-    ref={ref}
-    className={cn(
-      "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
-      className
-    )}
-    {...props}
-  />
-));
+>(({ className, ...props }, ref) => {
+  // #444: zebra bayrağı Table'dan gelir; TableHeader/TableFooter içinde false'tur.
+  const striped = React.useContext(TableStripedContext);
+
+  return (
+    <tr
+      ref={ref}
+      className={cn(
+        "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
+        striped && STRIPED_ROW_CLASSES,
+        className
+      )}
+      {...props}
+    />
+  );
+});
 TableRow.displayName = "TableRow";
 
 interface TableHeadProps extends React.ThHTMLAttributes<HTMLTableCellElement> {
@@ -207,12 +294,43 @@ interface TableHeadProps extends React.ThHTMLAttributes<HTMLTableCellElement> {
   sorted?: SortDirection;
   /** Sıralama değiştiğinde çağrılacak fonksiyon */
   onSort?: () => void;
+  /**
+   * Tablo düzeyi kontrollü sıralamada bu sütunun kimliği (#321).
+   *
+   * Verildiğinde `Table`'ın `sortColumn`/`sortDirection`/`onSortChange`
+   * prop'larıyla otomatik bağlanır: yön bağlamdan okunur, tıklama/klavye
+   * `onSortChange(columnId, sonrakiYön)` çağırır.
+   *
+   * Elle bağlayan mevcut kullanım (`sorted` + `onSort`) ÖNCELİKLİDİR ve
+   * çalışmaya devam eder — bu prop eklemeli, kırıcı değil.
+   */
+  columnId?: string;
   /** Text alignment */
   align?: 'left' | 'center' | 'right';
 }
 
 const TableHead = React.forwardRef<HTMLTableCellElement, TableHeadProps>(
-  ({ className, sortable, sorted, onSort, align = 'left', children, ...props }, ref) => {
+  ({ className, sortable, sorted, onSort, columnId, align = 'left', children, ...props }, ref) => {
+    const sortCtx = React.useContext(TableSortContext);
+
+    // Elle verilen `sorted`/`onSort` önceliklidir; yoksa bağlamdan türetilir.
+    const ctxSorted: SortDirection =
+      columnId && sortCtx && sortCtx.sortColumn === columnId
+        ? sortCtx.sortDirection ?? null
+        : null;
+    const effectiveSorted: SortDirection = sorted !== undefined ? sorted : ctxSorted;
+
+    const handleSort = React.useCallback(() => {
+      if (onSort) {
+        onSort();
+        return;
+      }
+      if (columnId && sortCtx?.onSortChange) {
+        sortCtx.onSortChange(columnId, nextSortDirection(ctxSorted));
+      }
+    }, [onSort, columnId, sortCtx, ctxSorted]);
+
+    const isInteractive = Boolean(sortable && (onSort || (columnId && sortCtx?.onSortChange)));
     // Sıralama için simgeler
     const renderSortIcon = () => {
       if (!sortable) return null;
@@ -282,11 +400,41 @@ const TableHead = React.forwardRef<HTMLTableCellElement, TableHeadProps>(
           sortable && "cursor-pointer hover:text-foreground select-none",
           className
         )}
-        onClick={sortable ? onSort : undefined}
+        /* #321: sıralama durumu ekran okuyucuya YANSIMIYORDU (`aria-sort`
+           grep'i 0 idi) — yalnız görsel ok ikonu değişiyordu. Sıralanamayan
+           sütunda öznitelik hiç basılmaz. */
+        aria-sort={
+          sortable
+            ? effectiveSorted === "asc"
+              ? "ascending"
+              : effectiveSorted === "desc"
+                ? "descending"
+                : "none"
+            : undefined
+        }
+        onClick={isInteractive ? handleSort : undefined}
         {...props}
       >
         {sortable || align !== 'left' ? (
-          <div className={cn("flex items-center", alignmentClasses[align].split(' ')[1])}>
+          <div
+            className={cn("flex items-center", alignmentClasses[align].split(' ')[1])}
+            /* #321: sıralama kontrolü yalnız fareyle çalışıyordu (dosyada
+               `tabIndex` grep'i 0, `onKeyDown` yok). Görsel olarak div kalır ama
+               role/tabIndex/onKeyDown ile gerçek düğme gibi davranır; erişilebilir
+               adı sütun başlığıdır. Pro DataTable'da aynı düzeltme #291'de yapıldı. */
+            role={isInteractive ? "button" : undefined}
+            tabIndex={isInteractive ? 0 : undefined}
+            onKeyDown={
+              isInteractive
+                ? (e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleSort();
+                    }
+                  }
+                : undefined
+            }
+          >
             {children}
             {sortable && renderSortIcon()}
           </div>
@@ -347,4 +495,5 @@ export {
   TableCaption,
 };
 
-export type { TableBodyProps };
+// #321: TableProps/TableHeadProps/TableCellProps export edilmiyordu
+export type { TableProps, TableBodyProps, TableHeadProps, TableCellProps };

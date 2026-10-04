@@ -5,13 +5,24 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "../../lib/utils"
 import { Loader2 } from "lucide-react"
 
+// #296: Form kontrolü kenarlıkları hardcode Tailwind grisi kullanıyordu ve
+// `--input` token'ını tamamen atlıyordu; #284'ün token onarımı bu yüzeylere
+// hiç ulaşmıyordu. Ölçüldü (WCAG 1.4.11, eşik 3.0):
+//   border-gray-200 1.24 · border-gray-300 1.47 · dark:border-gray-700 1.72
+//   dark:border-gray-600 2.35 · hover:border-gray-400 2.54  → hepsi KALIYOR
+// `border-input` ile: açık 3.11, koyu 3.37 — ikisi de geçiyor.
+// Hover kenarlık ezmeleri kaldırıldı: taban kenarlık zaten eşiği geçiyor,
+// ayrı bir hover grisi tutmak yalnız token'ı yeniden atlamak olurdu.
+// NOT: text-gray-* sınıflarına DOKUNULMADI — hepsi kontrastı geçiyor
+// (4.83–17.74); onları çevirmek estetik refactor olurdu, a11y kazancı yok.
+
 /**
  * Textarea Variant Styles
  */
 const textareaVariants = cva(
   [
     "flex w-full rounded-md px-3 py-2 text-sm transition-all duration-200",
-    "text-foreground placeholder:text-muted-foreground dark:placeholder:text-gray-500",
+    "text-foreground placeholder:text-muted-foreground",
     "disabled:cursor-not-allowed disabled:opacity-50",
     "focus-visible:outline-none dark:text-gray-200",
     "resize-none" // Always disable manual resize, we control it
@@ -19,10 +30,10 @@ const textareaVariants = cva(
   {
     variants: {
       variant: {
-        default: "border border-gray-300 dark:border-gray-700 bg-background dark:bg-gray-800/80 hover:border-gray-400 dark:hover:border-gray-600 focus-visible:ring-2 focus-visible:ring-primary/30 dark:focus-visible:ring-primary/20 focus-visible:border-primary dark:focus-visible:border-primary/80 dark:shadow-inner dark:shadow-gray-950/10",
-        outline: "border-2 border-gray-300 dark:border-gray-700 bg-transparent hover:border-gray-400 dark:hover:border-gray-600 focus-visible:border-primary dark:focus-visible:border-primary/80",
+        default: "border border-input bg-background dark:bg-gray-800/80 focus-visible:ring-2 focus-visible:ring-primary/30 dark:focus-visible:ring-primary/20 focus-visible:border-primary dark:focus-visible:border-primary/80 dark:shadow-inner dark:shadow-gray-950/10",
+        outline: "border-2 border-input bg-transparent focus-visible:border-primary dark:focus-visible:border-primary/80",
         ghost: "border-none bg-transparent hover:bg-gray-100/50 dark:hover:bg-gray-800/30 focus-visible:bg-transparent",
-        underline: "border-t-0 border-l-0 border-r-0 border-b-2 border-gray-300 dark:border-gray-600 rounded-none px-0 hover:border-gray-400 dark:hover:border-gray-500 focus-visible:ring-0 focus-visible:border-primary dark:focus-visible:border-primary/80 bg-transparent dark:bg-transparent"
+        underline: "border-t-0 border-l-0 border-r-0 border-b-2 border-input rounded-none px-0 focus-visible:ring-0 focus-visible:border-primary dark:focus-visible:border-primary/80 bg-transparent dark:bg-transparent"
       },
       size: {
         sm: "min-h-[60px] text-xs",
@@ -99,6 +110,10 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     onChange,
     ...props
   }, ref) => {
+    // Mesaj id'leri `props.id` yoksa sabit string'e düşüyordu -> aynı sayfada
+    // iki id'siz Textarea'da yinelenen DOM id'si oluşuyordu.
+    const reactId = React.useId()
+    const fieldId = props.id || reactId
     const textareaRef = React.useRef<HTMLTextAreaElement>(null)
     const [internalValue, setInternalValue] = React.useState(value || defaultValue || "")
 
@@ -172,8 +187,8 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             maxLength={maxLength}
             aria-invalid={!!error || undefined}
             aria-describedby={
-              errorMessage ? `${props.id || ''}-error` :
-              successMessage ? `${props.id || ''}-success` :
+              errorMessage ? `${fieldId}-error` :
+              successMessage ? `${fieldId}-success` :
               undefined
             }
             {...props}
@@ -197,8 +212,8 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
                 messageClassName
               )}
               id={
-                errorMessage ? `${props.id || ''}-error` :
-                successMessage ? `${props.id || ''}-success` :
+                errorMessage ? `${fieldId}-error` :
+                successMessage ? `${fieldId}-success` :
                 undefined
               }
             >
@@ -207,8 +222,13 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           )}
 
           {/* Character Count */}
+          {/* #661-14: `dark:text-gray-500` KALDIRILDI. `text-muted-foreground`
+              zaten koyu temada 62% L üretiyor (kart üstünde 6.29:1); üstüne
+              binen `dark:` katmanı gray-500'e düşürüp 3.68:1 veriyordu — yani
+              token DOĞRUYKEN ikinci katman onu AA altına indiriyordu (#646 ile
+              aynı kusur sınıfı). Açık temada değişiklik yok. */}
           {showCharCount && (
-            <p className="text-xs text-muted-foreground dark:text-gray-500 ml-auto">
+            <p className="text-xs text-muted-foreground ml-auto">
               {currentLength}{maxLength !== undefined && ` / ${maxLength}`}
             </p>
           )}

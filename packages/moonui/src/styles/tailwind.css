@@ -1,7 +1,26 @@
-/* 
+/*
  * MoonUI Tailwind CSS
  * NOT: Bu dosya artık tailwind direktiflerini içermiyor
  * Ana proje zaten Tailwind kullandığı için çakışmayı önlemek amacıyla kaldırıldı
  */
 
 /* Component-specific utility classes buraya eklenebilir */
+
+/* Hide scrollbar utility - For scrollable tabs */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Snap scroll utilities - For smooth tab scrolling */
+.snap-x {
+  scroll-snap-type: x mandatory;
+}
+
+.snap-mandatory {
+  scroll-snap-align: start;
+}
