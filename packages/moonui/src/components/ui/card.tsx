@@ -2,10 +2,15 @@
 
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { motion, type HTMLMotionProps } from "framer-motion";
 import { Slot } from "@radix-ui/react-slot";
 import { cn } from "../../lib/utils";
 import { microInteractionVariants, hoverAnimations, tapAnimations } from "@/lib/micro-interactions";
+
+// framer-motion YALNIZ `interactive` kartta gerekir (~38 KB gz). Statik import her sayfanın ilk
+// yüküne girerdi; `React.lazy` ile parça yalnız etkileşimli kart çizilince iner. Parça inene kadar
+// (yalnız istemci-tarafı ilk çizim) aynı sınıf/çocuklarla düz `div` gösterilir; SSR'da parça
+// sunucuda çözülür, HTML aynıdır ve hydration parça gelince çocukları yeniden kurmadan tamamlanır.
+const CardMotionRoot = React.lazy(() => import("../../lib/card-motion"));
 
 // #310: `dark:bg-gray-850` ÖLÜ SINIFTI — Tailwind gri ölçeğinde 850 basamağı yok
 // (50…800, 900, 950) ve preset de eklemiyor. `elevated` varyantının karanlık zemini
@@ -176,12 +181,16 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
       
       return (
         <CardSizeContext.Provider value={resolvedSize}>
-          <motion.div
-            ref={ref}
-            className={rootClassName}
-            {...interactionProps}
-            {...(props as any)}
-          />
+          <React.Suspense
+            fallback={<div ref={ref} className={rootClassName} {...props} />}
+          >
+            <CardMotionRoot
+              ref={ref}
+              className={rootClassName}
+              {...interactionProps}
+              {...(props as any)}
+            />
+          </React.Suspense>
         </CardSizeContext.Provider>
       );
     }

@@ -97,38 +97,49 @@ Everything the preset sets is still yours to override — add your own
 
 The preset only *maps* the variables; this file *defines* them (light and dark).
 
+```jsx
+// app/layout.tsx (Next.js)  ·  src/main.jsx (Vite)
+import "./globals.css";
+import "@moontra/moonui/tokens.css";
+```
+
 ```css
 /* globals.css */
-@import "@moontra/moonui/src/styles/tokens.css";
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 ```
 
-> **Why the `src/styles/…` path and not `@moontra/moonui/tokens.css`?** Because the
-> two are resolved by different machinery. `postcss-import` — what handles CSS
-> `@import` in the usual Tailwind v3 + PostCSS setup — does not read a package's
-> `exports` map, so in CSS it needs the physical path (it ships in the tarball via
-> the package `files` field). Bundler/Node resolution is the mirror image: it *is*
-> `exports`-aware, so from JavaScript use the subpath instead:
->
-> ```jsx
-> // app/layout.tsx
-> import "@moontra/moonui/tokens.css";
-> ```
->
-> Either route loads the same file — pick one, not both.
+If you would rather keep it in CSS, which specifier works depends on your setup:
 
-Recommended: also add the semantic layer. It defines extra tokens (elevation,
-duration, easing) and the handful of utilities that have no Tailwind equivalent —
-`shadow-xs`, `animate-fade-in`, `duration-fast`, `ease-bounce`. Every token the
-preset reads already lives in `tokens.css`, so components still render correctly
-without it; you only lose those extras (for example the `Skeleton` fade-in).
+| How you import it | Next.js 15 (default PostCSS) | Next.js 15 + `postcss-import` | Vite 5 |
+|---|---|---|---|
+| **JavaScript** `import "@moontra/moonui/tokens.css"` | ✅ | ✅ | ✅ |
+| CSS `@import "@moontra/moonui/tokens.css"` | ✅ | ❌ `Failed to find` | ✅ |
+| CSS `@import "@moontra/moonui/src/styles/tokens.css"` | ❌ `not exported` | ✅ | ❌ `not exported` |
+| CSS `@import "@moontra/moonui"` | ❌ `not exported` | ✅ | ❌ build error |
 
-```css
-@import "@moontra/moonui/src/styles/design-system.css";
-```
+> Measured on `@moontra/moonui@6.30.3` from npm (Next.js 15.x, Tailwind 3.4, Vite 5):
+> ✅ = build passes and `Button` computes a coloured `background-color`; ❌ = build fails.
+> The JavaScript import is the only form that works in all three. `postcss-import` does not
+> read `exports`, so it needs the physical `src/styles/…` path; Next's and Vite's own
+> resolvers *are* `exports`-aware and reject it. Load tokens once — pick one row, not two.
+> Tailwind v4 and Webpack-only (non-Next) setups were not measured.
+
+Optional: the semantic layer. It defines extra tokens (elevation, duration, easing) and
+the handful of utilities that have no Tailwind equivalent — `shadow-xs`,
+`animate-fade-in`, `duration-fast`, `ease-bounce`. Every token the preset reads already
+lives in `tokens.css`, so components render correctly without it; you only lose those
+extras (for example the `Skeleton` fade-in). The file contains `@layer base`, so it has
+to be a CSS `@import` placed before `@tailwind base` — a JavaScript import of it fails the
+Vite build. Build results for the CSS `@import` (build only, colour not re-measured):
+
+| Specifier | Next.js 15 (default PostCSS) | Next.js 15 + `postcss-import` | Vite 5 |
+|---|---|---|---|
+| `@moontra/moonui/design-system.css` | ❌ `@layer base` error | ❌ `Failed to find` | ✅ |
+| `@moontra/moonui/src/styles/design-system.css` | ❌ `not exported` | ✅ | ❌ build error |
+
+On default Next.js neither form builds, so skip this file there.
 
 3. **Start using components**
 
@@ -545,8 +556,8 @@ Recommended for development: Node.js 18+ and TypeScript 5+.
 ### Local Development
 
 ```bash
-git clone https://github.com/oguzhanayyldz/moonuikit
-cd moonuikit/packages/moonui
+git clone https://github.com/moonuidotdev/moonui
+cd moonui/packages/moonui
 npm install
 npm run dev
 ```
@@ -562,7 +573,7 @@ npm run test       # Run tests
 
 ## 🤝 Contributing
 
-We welcome contributions! See our [Contributing Guide](https://github.com/oguzhanayyldz/moonuikit/blob/main/CONTRIBUTING.md) for details.
+We welcome contributions! See our [Contributing Guide](https://github.com/moonuidotdev/moonui/blob/main/CONTRIBUTING.md) for details.
 
 ### Development Workflow
 
@@ -598,7 +609,7 @@ We welcome contributions! See our [Contributing Guide](https://github.com/oguzha
 
 ## 📄 License
 
-Licensed under the [MIT License](https://github.com/oguzhanayyldz/moonuikit/blob/main/LICENSE).
+Licensed under the [MIT License](https://github.com/moonuidotdev/moonui/blob/main/LICENSE).
 
 ## 🙏 Acknowledgments
 
@@ -614,7 +625,7 @@ Built with:
 
 <div align="center">
 
-**[Website](https://moonui.dev) • [Documentation](https://moonui.dev/docs) • [Components](https://moonui.dev/docs/components) • [GitHub](https://github.com/oguzhanayyldz/moonuikit)**
+**[Website](https://moonui.dev) • [Documentation](https://moonui.dev/docs) • [Components](https://moonui.dev/docs/components) • [GitHub](https://github.com/moonuidotdev/moonui)**
 
 Made with ❤️ by the MoonUI team
 

@@ -52,8 +52,8 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 
 1. Clone your fork:
 ```bash
-git clone https://github.com/your-username/moonuikit.git
-cd moonuikit
+git clone https://github.com/your-username/moonui.git
+cd moonui
 ```
 
 2. Install dependencies:
@@ -69,7 +69,7 @@ npm run dev
 ### Project Structure
 
 ```
-moonuikit/
+moonui/
 ├── packages/
 │   └── moonui/           # Main component library
 │       ├── src/
@@ -225,7 +225,7 @@ Contributors will be:
 If you have questions, please:
 
 1. Check the [documentation](https://moonui.dev/docs)
-2. Search [existing issues](https://github.com/oguzhanayyldz/moonuikit/issues)
-3. Ask in [GitHub Discussions](https://github.com/oguzhanayyldz/moonuikit/discussions)
+2. Search [existing issues](https://github.com/moonuidotdev/moonui/issues)
+3. Ask in [GitHub Discussions](https://github.com/moonuidotdev/moonui/discussions)
 
 Thank you for contributing to MoonUI Kit! 🎉

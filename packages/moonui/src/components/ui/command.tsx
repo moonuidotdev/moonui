@@ -39,6 +39,39 @@ const commandVariants = cva(
   }
 )
 
+/**
+ * cmdk seçili öğeyi `scrollIntoView({ block: "nearest" })` ile görünüme alır: bileşen takılınca ve
+ * seçim değişince (öğe grubun ilkiyse grup başlığı için de). Tarayıcı bu çağrıda listeyle birlikte
+ * TÜM kaydırılabilir ataları — sayfanın kendisini de — kaydırır. Sayfaya gömülü bir Command, ziyaretçi
+ * aşağı kaydırmışken geç takılırsa sayfa Command'a geri çekilir. Öğe ve başlık yalnız en yakın
+ * `[cmdk-list]` içinde ('nearest' anlamıyla) görünüme alınır; liste dışındaysa yerel davranışa düşer.
+ */
+function scrollWithinList(this: HTMLElement, arg?: boolean | ScrollIntoViewOptions) {
+  const list = this.closest<HTMLElement>("[cmdk-list]")
+  if (!list) return Element.prototype.scrollIntoView.call(this, arg)
+  const box = list.getBoundingClientRect()
+  const own = this.getBoundingClientRect()
+  if (own.top < box.top) list.scrollTop -= box.top - own.top
+  else if (own.bottom > box.bottom) list.scrollTop += own.bottom - box.bottom
+}
+
+function containScroll(node: HTMLElement | null | undefined) {
+  if (node) node.scrollIntoView = scrollWithinList
+}
+
+// Grup başlığını cmdk kendisi çizer (ref'i yok): grubun ref'inden bulunur.
+function containGroupScroll(node: HTMLElement | null) {
+  containScroll(node?.querySelector<HTMLElement>(":scope > [cmdk-group-heading]"))
+}
+
+function useContainedRef<T extends HTMLElement>(ref: React.ForwardedRef<T>, contain: (node: T | null) => void) {
+  return React.useCallback((node: T | null) => {
+    contain(node)
+    if (typeof ref === "function") ref(node)
+    else if (ref) ref.current = node
+  }, [ref, contain])
+}
+
 // Command bileşeni - cmdk primitive wrapper
 interface CommandProps 
   extends React.ComponentProps<typeof CommandPrimitive>,
@@ -147,16 +180,19 @@ interface CommandGroupProps
 const CommandGroup = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Group>,
   CommandGroupProps
->(({ className, ...props }, ref) => (
+>(({ className, ...props }, ref) => {
+  const groupRef = useContainedRef(ref, containGroupScroll)
+  return (
   <CommandPrimitive.Group
-    ref={ref}
+    ref={groupRef}
     className={cn(
       "overflow-hidden p-1 text-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground",
       className
     )}
     {...props}
   />
-))
+  )
+})
 CommandGroup.displayName = "CommandGroup"
 
 // CommandSeparator bileşeni
@@ -194,16 +230,19 @@ interface CommandItemProps
 const CommandItem = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Item>,
   CommandItemProps
->(({ className, ...props }, ref) => (
+>(({ className, ...props }, ref) => {
+  const itemRef = useContainedRef(ref, containScroll)
+  return (
   <CommandPrimitive.Item
-    ref={ref}
+    ref={itemRef}
     className={cn(
       "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none aria-selected:bg-accent aria-selected:text-accent-foreground data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50",
       className
     )}
     {...props}
   />
-))
+  )
+})
 CommandItem.displayName = "CommandItem"
 
 // CommandShortcut bileşeni - utility component

@@ -26,6 +26,26 @@ type TabsOrientation = "horizontal" | "vertical";
  */
 const TabsOrientationContext = React.createContext<TabsOrientation>("horizontal");
 
+/**
+ * MO-118: panel kaydı. Radix her `TabsTrigger`a `aria-controls="<panel-id>"` basar; Tabs
+ * FİLTRE olarak (hiç `TabsContent` yazılmadan) kullanılınca bu id DOM'da hiç yoktur ve
+ * ekran okuyucu var olmayan bir panele yönlendirilir. Kök, yazılmış `TabsContent`
+ * sayısını tutar; sayı 0 iken tetikleyiciler `aria-controls` basmaz. İlk render (SSR ve
+ * istemci) 0 ile başlar → hidrasyon eşleşir; paneller mount'ta kaydolunca öznitelik gelir.
+ * Filtre için doğru bileşen yine de `ToggleGroup`dur (tabs belgesindeki not).
+ */
+type TabsPanelRegistry = { count: number; register: () => () => void };
+const TabsPanelRegistryContext = React.createContext<TabsPanelRegistry | null>(null);
+
+function useTabsPanelRegistry(): TabsPanelRegistry {
+  const [count, setCount] = React.useState(0);
+  const register = React.useCallback(() => {
+    setCount((c) => c + 1);
+    return () => setCount((c) => c - 1);
+  }, []);
+  return React.useMemo(() => ({ count, register }), [count, register]);
+}
+
 interface TabsProps extends React.ComponentPropsWithoutRef<typeof TabsPrimitive.Root> {
   /**
    * @deprecated `orientation="vertical"` kullanın — pro `MoonUITabsPro` ile aynı ad ve
@@ -40,18 +60,21 @@ const Tabs = React.forwardRef<
 >(({ vertical = false, orientation, className, ...props }, ref) => {
   const resolvedOrientation: TabsOrientation =
     orientation ?? (vertical ? "vertical" : "horizontal");
+  const panels = useTabsPanelRegistry();
 
   return (
     <TabsOrientationContext.Provider value={resolvedOrientation}>
-      <TabsPrimitive.Root
-        ref={ref}
-        // #322: `className` eskiden destructure EDİLMİYORDU; `cn("moonui-theme", …)`
-        // hesaplanıp ardından `{...props}` yayıldığı için tüketici `className` verdiğinde
-        // hesaplanan değer tümüyle eziliyor ve `moonui-theme` tema kapsamı düşüyordu.
-        className={cn("moonui-theme", className)}
-        orientation={resolvedOrientation}
-        {...props}
-      />
+      <TabsPanelRegistryContext.Provider value={panels}>
+        <TabsPrimitive.Root
+          ref={ref}
+          // #322: `className` eskiden destructure EDİLMİYORDU; `cn("moonui-theme", …)`
+          // hesaplanıp ardından `{...props}` yayıldığı için tüketici `className` verdiğinde
+          // hesaplanan değer tümüyle eziliyor ve `moonui-theme` tema kapsamı düşüyordu.
+          className={cn("moonui-theme", className)}
+          orientation={resolvedOrientation}
+          {...props}
+        />
+      </TabsPanelRegistryContext.Provider>
     </TabsOrientationContext.Provider>
   );
 });
@@ -207,6 +230,9 @@ const TabsTrigger = React.forwardRef<
   // #322: yönelim Root'tan context ile geliyor; yerel prop verilirse o kazanır.
   const contextOrientation = React.useContext(TabsOrientationContext);
   const resolvedOrientation = orientation ?? contextOrientation;
+  // MO-118: panelsiz Tabs'ta Radix'in aria-controls'unu ez (tüketici açıkça verdiyse dokunma).
+  const panels = React.useContext(TabsPanelRegistryContext);
+  const dropControls = panels !== null && panels.count === 0 && !("aria-controls" in props);
 
   return (
   <TabsPrimitive.Trigger
@@ -218,6 +244,7 @@ const TabsTrigger = React.forwardRef<
       className
     )}
     {...props}
+    {...(dropControls ? { "aria-controls": undefined } : null)}
   >
     {icon && iconPosition === "left" && (
       <span className="mr-2">{icon}</span>
@@ -247,7 +274,10 @@ interface TabsContentProps
 const TabsContent = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Content>,
   TabsContentProps
->(({ className, animated = false, ...props }, ref) => (
+>(({ className, animated = false, ...props }, ref) => {
+  const register = React.useContext(TabsPanelRegistryContext)?.register;
+  React.useEffect(() => register?.(), [register]);
+  return (
   <TabsPrimitive.Content
     ref={ref}
     className={cn(
@@ -258,7 +288,8 @@ const TabsContent = React.forwardRef<
     )}
     {...props}
   />
-));
+);
+});
 
 TabsContent.displayName = TabsPrimitive.Content.displayName;
 

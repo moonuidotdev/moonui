@@ -12,7 +12,7 @@
     ·
     <a href="https://moonui.dev/components">Components</a>
     ·
-    <a href="https://github.com/oguzhanayyldz/moonuikit/issues">Report Bug</a>
+    <a href="https://github.com/moonuidotdev/moonui/issues">Report Bug</a>
   </p>
   
   <p align="center">
@@ -22,11 +22,11 @@
     <a href="https://www.npmjs.com/package/@moontra/moonui">
       <img src="https://img.shields.io/npm/dm/@moontra/moonui?style=flat-square&color=blue" alt="NPM Downloads">
     </a>
-    <a href="https://github.com/oguzhanayyldz/moonuikit/blob/main/LICENSE">
+    <a href="https://github.com/moonuidotdev/moonui/blob/main/LICENSE">
       <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License">
     </a>
-    <a href="https://github.com/oguzhanayyldz/moonuikit/stargazers">
-      <img src="https://img.shields.io/github/stars/oguzhanayyldz/moonuikit?style=flat-square&color=yellow" alt="GitHub Stars">
+    <a href="https://github.com/moonuidotdev/moonui/stargazers">
+      <img src="https://img.shields.io/github/stars/moonuidotdev/moonui?style=flat-square&color=yellow" alt="GitHub Stars">
     </a>
   </p>
 </div>
@@ -219,7 +219,7 @@ MoonUI uses CSS variables for theming. You can easily customize the look and fee
 
 ```bash
 # Clone the repository
-git clone https://github.com/oguzhanayyldz/moonuikit.git
+git clone https://github.com/moonuidotdev/moonui.git
 
 # Install dependencies
 npm install
@@ -231,7 +231,7 @@ npm run dev
 ### Project Structure
 
 ```
-moonuikit/
+moonui/
 ├── packages/
 │   └── moonui/           # Main component library
 ├── examples/             # Example projects
@@ -259,7 +259,7 @@ MoonUI is [MIT licensed](LICENSE).
 
 ## 🙏 Credits
 
-Built with ❤️ by [Oğuzhan Ayyıldız](https://github.com/oguzhanayyldz) and [contributors](https://github.com/oguzhanayyldz/moonuikit/graphs/contributors).
+Built with ❤️ by [Oğuzhan Ayyıldız](https://github.com/oguzhanayyldz) and [contributors](https://github.com/moonuidotdev/moonui/graphs/contributors).
 
 Special thanks to:
 - [Radix UI](https://radix-ui.com) for the amazing primitives
@@ -281,7 +281,7 @@ If you find MoonUI helpful, please consider:
 - [Website](https://moonui.dev)
 - [Documentation](https://moonui.dev/docs)
 - [NPM Package](https://www.npmjs.com/package/@moontra/moonui)
-- [Twitter](https://twitter.com/moonuidesign)
+- [Twitter](https://x.com/moonuidotdev)
 
 ---
 

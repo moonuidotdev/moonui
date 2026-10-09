@@ -1,16 +1,16 @@
 {
   "name": "@moontra/moonui",
-  "version": "6.30.0",
+  "version": "6.31.1",
   "description": "Premium React component library with modern design and customization",
   "author": "MoonUI",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/oguzhanayyldz/moonuikit.git"
+    "url": "git+https://github.com/moonuidotdev/moonui.git"
   },
-  "homepage": "https://github.com/oguzhanayyldz/moonuikit",
+  "homepage": "https://github.com/moonuidotdev/moonui",
   "bugs": {
-    "url": "https://github.com/oguzhanayyldz/moonuikit/issues"
+    "url": "https://github.com/moonuidotdev/moonui/issues"
   },
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -63,12 +63,13 @@
   ],
   "scripts": {
     "dev": "npm run build -- --watch",
-    "build": "npm run build:js && npm run build:dts && node scripts/postbuild.js && npm run build:cdn",
+    "build": "npm run clean && npm run build:js && node scripts/postbuild.js && npm run build:cdn && node scripts/check-use-client.mjs",
     "build:js": "tsup",
-    "build:dts": "tsup --dts-only",
     "build:cdn": "npm run build:cdn:js && npm run build:cdn:css",
     "build:cdn:js": "tsup --config tsup.cdn.config.ts",
     "build:cdn:css": "tailwindcss -c tailwind.cdn.config.js -i src/styles/cdn.css -o dist/cdn/moonui.css --minify",
+    "check:exports": "node scripts/check-export-parity.mjs",
+    "check:use-client": "node scripts/check-use-client.mjs",
     "verify:cdn": "node scripts/cdn/verify-cdn.mjs",
     "lint": "eslint src --ext .ts,.tsx",
     "clean": "rm -rf dist",

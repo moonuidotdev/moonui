@@ -24,7 +24,13 @@ import { Loader2 } from "lucide-react";
  */
 
 const inputWrapperVariants = cva(
-  "group relative flex items-center w-full transition-colors",
+  // `relative` BURADA YOK — aşağıda yalnız sarmalayıcının kendi mutlak çocukları
+  // (ikon, buton, spinner, floating label) varken eklenir. Her zaman `relative` olunca
+  // sarmalayıcı konumlandırılmış öğe sayılıyor ve DOM'da kendisinden ÖNCE gelen mutlak
+  // bir ikonun (yaygın kalıp: `<div class="relative"><Search class="absolute"/><Input/></div>`)
+  // ÜSTÜNE boyanıyordu; opak arka plan ikonu örtüyordu (Kanban/Timeline/Data Table
+  // arama kutuları, docs araması — TASK-MUUWZ4VQ4KCOK bulgu 2).
+  "group flex items-center w-full transition-colors",
   {
     variants: {
       size: {
@@ -204,13 +210,17 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       }
     }, [value]);
 
+    // Sarmalayıcı yalnız kendi mutlak konumlu çocukları için `relative` olur
+    // (gerekçe `inputWrapperVariants` notunda).
+    const hasOwnOverlay = Boolean(leftIcon || rightIcon || rightButton || loading || (floatingLabel && label));
+
     // Mesajı göster/gizle
     const showMessage = alwaysShowMessage || error || success;
     const messageType = error ? "error" : success ? "success" : "normal";
 
     return (
       <div className="space-y-1.5 w-full">
-        <div className={cn("moonui-theme", inputWrapperVariants({ size }), wrapperClassName)}>
+        <div className={cn("moonui-theme", inputWrapperVariants({ size }), hasOwnOverlay && "relative", wrapperClassName)}>
           {/* Floating Label */}
           {floatingLabel && label && (
             <label
